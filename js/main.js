@@ -93,7 +93,7 @@ function movingHlcptrs() {
     isMoving = true
     var currCell
     if (!isGoLeftOk) {
-        for (var i = 0; i < gBoard.length; i++) {
+        for (var i = gBoard.length - 1; i >= 0; i--) {
             for (var j = gBoard.length - 1; j >= 0; j--) {
                 if (gBoard[i][j].gameElement === HELICOPTER) {
                     deleteElement({ i, j }, SKY)
@@ -106,7 +106,7 @@ function movingHlcptrs() {
     }
 
     else {
-        for (var i = 0; i < gBoard.length; i++) {
+        for (var i = gBoard.length - 1; i >= 0; i--) {
             for (var j = 0; j < gBoard.length; j++) {
                 if (gBoard[i][j].gameElement === HELICOPTER) {
                     deleteElement({ i, j }, SKY)
