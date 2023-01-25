@@ -7,13 +7,14 @@
 
 <body onload="initGame()" onkeydown="handleKey(event)">
     <h1>Space Invaders</h1>
-    <p class="point">Player points: <span class="points">0</span></p>
+    <button onclick="play()" class="play">Play</button>
     <table class="board"></table>
     <p class="bless"></p>
     <button onclick="restart()" class="restart">Restart</button>
+    <p class="point">Player points: <span class="points">0</span></p>
 </body>
-<button onclick="play()" class="play">Play</button>
 <button onclick="silent" class="silent">si</button>
+<button onclick="frees()" class="frees">frees</button>
 
 <script src="js/main.js"></script>
 

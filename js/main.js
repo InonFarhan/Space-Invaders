@@ -15,7 +15,6 @@ const HELICOPTER_ROW_LENGTH = 3
 const HELICOPTER_COL_COUNT = BOARD_SIZE - 1
 const LASER_SPEED = 80
 
-var isMoving
 var isPlay
 var isVictory
 var isGoLeftOk
@@ -42,7 +41,6 @@ function initGame() {
     isVictory = false
     isGoLeftOk = true
     gIsHhlcptrsFreeze = false
-    isMoving = false
     gMoveCounter = 1
     gBoard = createBoard(BOARD_SIZE)
     gPlayer.pos = { i: gBoard.length - 1, j: (BOARD_SIZE - 1) / 2 }
@@ -52,6 +50,7 @@ function initGame() {
 
 function play() {
     if (isPlay) return
+    changeOpacity('play', '0')
     isPlay = true
     addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
     gMovingHlcptrsInterval = setInterval(movingHlcptrs, gGame.speedGame)
@@ -60,6 +59,7 @@ function play() {
 function restart() {
     isPlay = false
     gPlayer.points = 0
+    changeOpacity('play', '1')
     changeText('points', gPlayer.points)
     clearIntervals()
     initGame()
@@ -88,9 +88,17 @@ function clearIntervals() {
     clearInterval(gMovingHlcptrsInterval)
 }
 
+function cellCliked(cell) {
+    console.log(cell)
+}
+
+function frees() {
+    if (gIsHhlcptrsFreeze) gIsHhlcptrsFreeze = false
+    else gIsHhlcptrsFreeze = true
+}
+
 function movingHlcptrs() {
     if (gIsHhlcptrsFreeze) return
-    isMoving = true
     var currCell
     if (!isGoLeftOk) {
         for (var i = gBoard.length - 1; i >= 0; i--) {
@@ -140,15 +148,14 @@ function movingHlcptrs() {
             gMoveCounter = 0
         }
     }
-    isMoving = false
 }
 
 function shotHlcptr(cell) {
+    clearInterval(gShotInterval)
     gGame.helicopterCount--
     gPlayer.points++
     changeText('points', gPlayer.points)
     gPlayer.isShoting = false
-    clearInterval(gShotInterval)
     if (checkIfVictory()) gameOver()
 }
 
@@ -162,7 +169,7 @@ function shoting() {
 
     gShotInterval = setInterval(() => {
         currPos = { i: shotPos.i - counter, j: shotPos.j }
-        if (!isMoving && gBoard[currPos.i][currPos.j].gameElement === HELICOPTER) shotHlcptr(currPos)
+        if (gBoard[currPos.i][currPos.j].gameElement === HELICOPTER) shotHlcptr(currPos)
         addElement(currPos, SHOT_ELEMENT, SHOT, SHOT)
         counter++
         setTimeout(deleteElement, 70, currPos, SHOT)
@@ -194,19 +201,13 @@ function randerCell(cell, value) {
 }
 
 function randerBoard(board) {
-    var element
     var strHtml = ``
 
     for (var i = 0; i < board.length; i++) {
         strHtml += `<tr>`
         for (var j = 0; j < board[i].length; j++) {
 
-            element = ''
-            // if (board[i][j].gameElement === HELICOPTER) element = HELICOPTER_ELEMENT
-            // if (board[i][j].gameElement === SHOT) element = SHOT_ELEMENT
-            // if (board[i][j].gameElement === HERO) element = HERO_ELEMENT
-
-            strHtml += `<td onclick="cellCliked(this)" class="cell-${i}-${j}" onclick="moveTo(${i},${j})">${element}</td>`
+            strHtml += `<td onclick="cellCliked(this)" class="cell-${i}-${j}"></td>`
         }
         strHtml += `</tr >`
     }
