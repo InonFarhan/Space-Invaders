@@ -19,6 +19,7 @@ var isPlay
 var isVictory
 var isGoLeftOk
 var gIsHhlcptrsFreeze
+var isSilent = false
 
 var gShotInterval
 var gMovingHlcptrsInterval
@@ -151,6 +152,7 @@ function movingHlcptrs() {
 }
 
 function shotHlcptr(cell) {
+    deleteElement(cell, SKY)
     clearInterval(gShotInterval)
     gGame.helicopterCount--
     gPlayer.points++
@@ -245,6 +247,9 @@ function handleKey(event) {
         case ' ':
             shoting();
             break;
+        case '`':
+            frees();
+            break;
 
         default: console.log(event)
     }
@@ -260,6 +265,7 @@ function addElement(cell, value, element, type) {
 
 function deleteElement(cell, type) {
     gBoard[cell.i][cell.j].gameElement = null
+    gBoard[cell.i][cell.j].type = null
     randerCell(cell, null)
     removeClassFromCell(cell, type)
 }
@@ -287,4 +293,15 @@ function removeClassFromCell(cell, value) {
 function showForSec(cell) {
     changeOpacity(cell, '0.91')
     setTimeout(changeOpacity, 1500, cell, '0')
+}
+
+function silent() {
+    if (!isSilent) {
+        isSilent = true
+        changeHtml('silent', '&#128263')
+    }
+    else {
+        isSilent = false
+        changeHtml('silent', '&#128266')
+    }
 }
