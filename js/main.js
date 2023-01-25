@@ -15,6 +15,7 @@ const HELICOPTER_ROW_LENGTH = 3
 const HELICOPTER_COL_COUNT = BOARD_SIZE - 1
 const LASER_SPEED = 80
 
+var isMoving
 var isPlay
 var isVictory
 var isGoLeftOk
@@ -41,6 +42,7 @@ function initGame() {
     isVictory = false
     isGoLeftOk = true
     gIsHhlcptrsFreeze = false
+    isMoving = false
     gMoveCounter = 1
     gBoard = createBoard(BOARD_SIZE)
     gPlayer.pos = { i: gBoard.length - 1, j: (BOARD_SIZE - 1) / 2 }
@@ -86,17 +88,9 @@ function clearIntervals() {
     clearInterval(gMovingHlcptrsInterval)
 }
 
-function freesHlcptrs() {
-    if (gIsHhlcptrsFreeze) gIsHhlcptrsFreeze = false
-    else gIsHhlcptrsFreeze = true
-}
-
-function cellCliked(cell) {
-    console.log(cell)
-}
-
 function movingHlcptrs() {
     if (gIsHhlcptrsFreeze) return
+    isMoving = true
     var currCell
     if (!isGoLeftOk) {
         for (var i = 0; i < gBoard.length; i++) {
@@ -146,6 +140,7 @@ function movingHlcptrs() {
             gMoveCounter = 0
         }
     }
+    isMoving = false
 }
 
 function shotHlcptr(cell) {
@@ -167,7 +162,7 @@ function shoting() {
 
     gShotInterval = setInterval(() => {
         currPos = { i: shotPos.i - counter, j: shotPos.j }
-        if (gBoard[currPos.i][currPos.j].gameElement === HELICOPTER) shotHlcptr(currPos)
+        if (!isMoving && gBoard[currPos.i][currPos.j].gameElement === HELICOPTER) shotHlcptr(currPos)
         addElement(currPos, SHOT_ELEMENT, SHOT, SHOT)
         counter++
         setTimeout(deleteElement, 70, currPos, SHOT)
