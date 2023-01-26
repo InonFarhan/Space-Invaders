@@ -145,13 +145,6 @@ function buildWall(wall) {
         currBlock = wall[i]
         addElement(currBlock.cell, currBlock.value, currBlock.element, currBlock.type)
     }
-
-    // addElement({ i: BOARD_SIZE - 2, j: 1 }, WALL_ELEMENT, WALL, WALL)
-    // addElement({ i: BOARD_SIZE - 2, j: 2 }, WALL_ELEMENT, WALL, WALL)
-    // addElement({ i: BOARD_SIZE - 2, j: 3 }, WALL_ELEMENT, WALL, WALL)
-    // addElement({ i: BOARD_SIZE - 2, j: 7 }, WALL_ELEMENT, WALL, WALL)
-    // addElement({ i: BOARD_SIZE - 2, j: 8 }, WALL_ELEMENT, WALL, WALL)
-    // addElement({ i: BOARD_SIZE - 2, j: 9 }, WALL_ELEMENT, WALL, WALL)
 }
 
 function createWall() {
@@ -317,7 +310,7 @@ function shoting() {
         currPos = { i: shotPos.i - counter, j: shotPos.j }
         cell = gBoard[currPos.i][currPos.j]
 
-        if (cell.gameElement === WALL) meetWall(currPos)
+        if (cell.gameElement === WALL) clearInterval(gShotInterval)
         else if (cell.gameElement === HELICOPTER) meetHelicopter(currPos)
         else {
             if (cell.gameElement === CANDY) meetCandy()
@@ -374,10 +367,6 @@ function meetWall(cell) {
         addElement(cell, WALL_ELEMENT, WALL, WALL3)
     } else if (currBlock.shoutingCount === 5) deleteElement(cell, WALL3)
 
-    if (gPlayer.isShoting) {
-        gPlayer.isShoting = false
-
-    }
     if (gPlayer.isShoting) clearInterval(gShotInterval)
     else clearInterval(gHlcptrShotInterval)
 }
