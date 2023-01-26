@@ -1,13 +1,5 @@
 'use strict'
 
-const HERO_ELEMENT = `&#127918`
-const BOARD_SIZE = 11
-const HELICOPTER_ELEMENT = `&#128641`
-const CANDY_ELEMENT = `&#128176`
-const WALL_ELEMENT = ''
-var SHOT_GAMER_ELEMENT = `|`
-var SHOT_HLCPTRS_ELEMENT = `|`
-
 const DYING = 'dying'
 const WEAK = 'weak'
 const WALL = 'wall'
@@ -16,10 +8,19 @@ const SHOT = 'shot'
 const HELICOPTER = `helicopter`
 const HERO = 'hero'
 const SKY = 'sky'
-const NORMAL = 'normal'
+const LAND = 'land'
+
+const HERO_ELEMENT = `&#127918`
+const BOARD_SIZE = 11
+const HELICOPTER_ELEMENT = `&#128641`
+const CANDY_ELEMENT = `&#128176`
+const WALL_ELEMENT = ''
 
 const HELICOPTER_ROW_LENGTH = 3
 const HELICOPTER_COL_COUNT = BOARD_SIZE - 1
+
+var shotGamerElement = `|`
+var shotHlcptrsElement = `|`
 var LASER_SPEED = 80
 
 var isPlay
@@ -30,10 +31,10 @@ var isSilent = false
 
 var gFastBomb
 var gBigBomb
-var gBigBomb_element
-var gFastBomb_element
+var gLifeElement
+var gBigBombElement
+var gFastBombElement
 var gIsHhlcptrsFreeze
-var gGamerTypePos
 var gMoveCounter
 var gHelicopters
 var gBoard
@@ -63,9 +64,9 @@ function initGame() {
     isGoLeftOk = true
     isBigBomb = false
     gIsHhlcptrsFreeze = false
-    gGamerTypePos = NORMAL
-    gBigBomb_element = '&#128640 &#128640 &#128640'
-    gFastBomb_element = '&#128163 &#128163 &#128163'
+    gBigBombElement = '&#128640 &#128640 &#128640'
+    gFastBombElement = '&#128163 &#128163 &#128163'
+    gLifeElement = '&#128155 &#128155 &#128155'
     gBigBomb = 3
     gFastBomb = 3
     gMoveCounter = 1
@@ -74,7 +75,7 @@ function initGame() {
     gHelicopters = createHelicopters()
     gPlayer.pos = {
         i: gBoard.length - 1,
-        j: (BOARD_SIZE - 1) / 2
+        j: gBoard.length - 2
     }
     randerBoard(gBoard)
     addHlptrs(gHelicopters)
@@ -84,10 +85,11 @@ function initGame() {
 function play() {
     if (isPlay) return
     changeOpacity('play', '0')
-    changeHtml('bomb', gBigBomb_element)
-    changeHtml('fast', gFastBomb_element)
+    changeHtml('bomb', gBigBombElement)
+    changeHtml('fast', gFastBombElement)
+    changeHtml('life', gLifeElement)
     isPlay = true
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, gGamerTypePos)
+    addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
     gHlcptrsShotingInterval = setInterval(hlcptrsShoting, 700)
     gMovingHlcptrsInterval = setInterval(movingHlcptrs, gGame.speedGame)
     gCandyInterval = setInterval(addCandy, 10000)
@@ -96,6 +98,7 @@ function play() {
 function restart() {
     isPlay = false
     gPlayer.points = 0
+    gPlayer.life = 3
     changeOpacity('play', '1')
     changeText('points', gPlayer.points)
     clearIntervals()
@@ -119,6 +122,7 @@ function gameOver() {
     } else {
         changeHtml('bless', 'You lose...')
     }
+    deleteElement(gPlayer.pos, LAND)
 }
 
 function clearIntervals() {
@@ -176,7 +180,7 @@ function hlcptrsShoting() {
         }
         if (cell.gameElement === HERO) meetHero()
 
-        addElement(currPos, SHOT_HLCPTRS_ELEMENT, SHOT, SHOT)
+        addElement(currPos, shotHlcptrsElement, SHOT, SHOT)
         counter++
         setTimeout(deleteElement, 70, currPos, SHOT)
         if (currPos.i === gBoard.length - 1) {
@@ -282,7 +286,7 @@ function shoting() {
         else if (cell.gameElement === HELICOPTER) meetHelicopter(currPos)
         else {
             if (cell.gameElement === CANDY) meetCandy()
-            addElement(currPos, SHOT_GAMER_ELEMENT, SHOT, SHOT)
+            addElement(currPos, shotGamerElement, SHOT, SHOT)
             counter++
             setTimeout(deleteElement, 70, currPos, SHOT)
             if (currPos.i === 0) {
@@ -300,12 +304,23 @@ function meetHelicopter(cell) {
 }
 
 function meetHero() {
-    gPlayer.life--
-    // clearInterval(gHlcptrShotInterval)
-    // deleteElement(gPlayer.pos, gGamerTypePos)
-    // if (gPlayer.life === 2) gGamerTypePos = WEAK
-    // else if (gPlayer.life === 1) gGamerTypePos = DYING
-    // addElement(gPlayer.pos, HERO_ELEMENT, HERO, gGamerTypePos)
+    clearInterval(gHlcptrShotInterval)
+    if (gPlayer.life > 0) {
+        gPlayer.life--
+        gLifeElement = mySplit(gLifeElement, ' ')
+        if (gPlayer.life === 0) gLifeElement = ''
+        changeHtml('life', gLifeElement)
+    }
+
+    if (gPlayer.life === 2) changeOpacity('land', '0.5')
+    else if (gPlayer.life === 1) changeOpacity('land', '0.1')
+
+    deleteElement(gPlayer.pos, LAND)
+    gPlayer.pos = {
+        i: gBoard.length - 1,
+        j: gBoard.length - 2
+    }
+    addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
     if (gPlayer.life === 0) gameOver()
 }
 
@@ -327,9 +342,10 @@ function meetCandy() {
 
 function moveHero(i, j) {
     if (j < 0 || j > gBoard[0].length - 1) return
-    deleteElement(gPlayer.pos, gGamerTypePos)
+    deleteElement(gPlayer.pos, LAND)
+    addClassToCell(gPlayer.pos, LAND)
     gPlayer.pos = { i, j }
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, gGamerTypePos)
+    addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
 }
 
 function addHlptrs(helicopters) {
@@ -368,10 +384,12 @@ function randerCell(cell, value) {
 
 function randerBoard(board) {
     var strHtml = ``
+    var typeClass
     for (var i = 0; i < board.length; i++) {
         strHtml += `<tr>`
+        if (i === board.length - 1) typeClass = LAND
         for (var j = 0; j < board[i].length; j++) {
-            strHtml += `<td class=" cell-${i}-${j}"></td>`
+            strHtml += `<td class=" ${typeClass} cell-${i}-${j}"></td>`
         }
         strHtml += `</tr >`
     }
@@ -412,32 +430,32 @@ function handleKey(event) {
         case 'n':
             if (gPlayer.isShoting) return
             if (gBigBomb > 0) {
-                gBigBomb_element = mySplit(gBigBomb_element, ' ')
+                gBigBombElement = mySplit(gBigBombElement, ' ')
                 gBigBomb--
                 isBigBomb = true
-                SHOT_GAMER_ELEMENT = '&#128640'
+                shotGamerElement = '&#128640'
                 shoting()
                 setTimeout(() => {
-                    SHOT_GAMER_ELEMENT = '|'
+                    shotGamerElement = '|'
                 }, 1000)
-                if (gBigBomb === 0) gBigBomb_element = ''
-                changeHtml('bomb', gBigBomb_element)
+                if (gBigBomb === 0) gBigBombElement = ''
+                changeHtml('bomb', gBigBombElement)
             }
             break;
         case 'x':
             if (gPlayer.isShoting) return
             if (gFastBomb > 0) {
-                gFastBomb_element = mySplit(gFastBomb_element, ' ')
+                gFastBombElement = mySplit(gFastBombElement, ' ')
                 LASER_SPEED *= 3
                 gFastBomb--
-                SHOT_GAMER_ELEMENT = '^'
+                shotGamerElement = '^'
                 shoting()
                 setTimeout(() => {
                     LASER_SPEED /= 3
-                    SHOT_GAMER_ELEMENT = '|'
+                    shotGamerElement = '|'
                 }, 1000)
-                if (gFastBomb === 0) gFastBomb_element = ''
-                changeHtml('fast', gFastBomb_element)
+                if (gFastBomb === 0) gFastBombElement = ''
+                changeHtml('fast', gFastBombElement)
             }
             break;
         default: console.log(event)
@@ -452,11 +470,11 @@ function addElement(cell, value, element, type) {
     randerCell(cell, value)
 }
 
-function deleteElement(cell, type) {
+function deleteElement(cell, value) {
     gBoard[cell.i][cell.j].gameElement = null
     gBoard[cell.i][cell.j].type = null
     randerCell(cell, null)
-    removeClassFromCell(cell, type)
+    removeClassFromCell(cell, value)
 }
 
 function changeHtml(cell, value) {
