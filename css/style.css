@@ -151,6 +151,24 @@ img {
     background-color: brown;
 }
 
-.land {
+.wall2 {
+    background-color: rgba(165, 42, 42, 0.53);
+}
+
+.wall3 {
+    background-color: rgba(165, 42, 42, 0);
+}
+
+.normal {
     font-size: xxx-large;
+}
+
+.sick {
+    font-size: xxx-large;
+    opacity: 0.5;
+}
+
+.dying {
+    font-size: xxx-large;
+    opacity: 0.1;
 }

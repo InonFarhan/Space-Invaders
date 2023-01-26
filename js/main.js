@@ -3,12 +3,13 @@
 const DYING = 'dying'
 const WEAK = 'weak'
 const WALL = 'wall'
+const WALL2 = 'wall2'
+const WALL3 = 'wall3'
 const CANDY = 'candy'
 const SHOT = 'shot'
 const HELICOPTER = `helicopter`
 const HERO = 'hero'
 const SKY = 'sky'
-const LAND = 'land'
 
 const HERO_ELEMENT = `&#127918`
 const BOARD_SIZE = 11
@@ -22,6 +23,7 @@ const HELICOPTER_COL_COUNT = BOARD_SIZE - 1
 var shotGamerElement = `|`
 var shotHlcptrsElement = `|`
 var LASER_SPEED = 80
+var NORMAL = 'normal'
 
 var isPlay
 var isBigBomb
@@ -29,6 +31,7 @@ var isVictory
 var isGoLeftOk
 var isSilent = false
 
+var gWallShotCount
 var gFastBomb
 var gBigBomb
 var gLifeElement
@@ -38,6 +41,7 @@ var gIsHhlcptrsFreeze
 var gMoveCounter
 var gHelicopters
 var gBoard
+var gWall
 
 var gCurrFirstHkcptrsRow
 var gCandyInterval
@@ -70,6 +74,7 @@ function initGame() {
     gBigBomb = 3
     gFastBomb = 3
     gMoveCounter = 1
+    gWallShotCount = 0
     gCurrFirstHkcptrsRow = HELICOPTER_ROW_LENGTH - 1
     gBoard = createBoard(BOARD_SIZE)
     gHelicopters = createHelicopters()
@@ -79,7 +84,9 @@ function initGame() {
     }
     randerBoard(gBoard)
     addHlptrs(gHelicopters)
-    buildWall()
+    gWall = createWall()
+    buildWall(gWall)
+    console.log(gWall)
 }
 
 function play() {
@@ -89,7 +96,7 @@ function play() {
     changeHtml('fast', gFastBombElement)
     changeHtml('life', gLifeElement)
     isPlay = true
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
+    addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
     gHlcptrsShotingInterval = setInterval(hlcptrsShoting, 700)
     gMovingHlcptrsInterval = setInterval(movingHlcptrs, gGame.speedGame)
     gCandyInterval = setInterval(addCandy, 10000)
@@ -122,7 +129,7 @@ function gameOver() {
     } else {
         changeHtml('bless', 'You lose...')
     }
-    deleteElement(gPlayer.pos, LAND)
+    deleteElement(gPlayer.pos, NORMAL)
 }
 
 function clearIntervals() {
@@ -132,13 +139,39 @@ function clearIntervals() {
     clearInterval(gCandyInterval)
 }
 
-function buildWall() {
-    addElement({ i: BOARD_SIZE - 2, j: 1 }, WALL_ELEMENT, WALL, WALL)
-    addElement({ i: BOARD_SIZE - 2, j: 2 }, WALL_ELEMENT, WALL, WALL)
-    addElement({ i: BOARD_SIZE - 2, j: 3 }, WALL_ELEMENT, WALL, WALL)
-    addElement({ i: BOARD_SIZE - 2, j: 7 }, WALL_ELEMENT, WALL, WALL)
-    addElement({ i: BOARD_SIZE - 2, j: 8 }, WALL_ELEMENT, WALL, WALL)
-    addElement({ i: BOARD_SIZE - 2, j: 9 }, WALL_ELEMENT, WALL, WALL)
+function buildWall(wall) {
+    var currBlock
+    for (var i = 0; i < wall.length; i++) {
+        currBlock = wall[i]
+        addElement(currBlock.cell, currBlock.value, currBlock.element, currBlock.type)
+    }
+
+    // addElement({ i: BOARD_SIZE - 2, j: 1 }, WALL_ELEMENT, WALL, WALL)
+    // addElement({ i: BOARD_SIZE - 2, j: 2 }, WALL_ELEMENT, WALL, WALL)
+    // addElement({ i: BOARD_SIZE - 2, j: 3 }, WALL_ELEMENT, WALL, WALL)
+    // addElement({ i: BOARD_SIZE - 2, j: 7 }, WALL_ELEMENT, WALL, WALL)
+    // addElement({ i: BOARD_SIZE - 2, j: 8 }, WALL_ELEMENT, WALL, WALL)
+    // addElement({ i: BOARD_SIZE - 2, j: 9 }, WALL_ELEMENT, WALL, WALL)
+}
+
+function createWall() {
+    var wall = []
+    for (var j = 1; j <= 9; j++) {
+        if (j > 3 && j < 7) continue
+        wall.push(createBlock({ i: 9, j }, WALL_ELEMENT, WALL, WALL))
+    }
+    return wall
+}
+
+function createBlock(cell, value, element, type) {
+    var block
+    return block = {
+        cell: cell,
+        value: value,
+        element: element,
+        type: type,
+        shoutingCount: 0
+    }
 }
 
 function addCandy() {
@@ -174,9 +207,11 @@ function hlcptrsShoting() {
     gHlcptrShotInterval = setInterval(() => {
         currPos = { i: shotPos.i + counter, j: shotPos.j }
         cell = gBoard[currPos.i][currPos.j]
+
         if (currPos.i < gBoard.length - 1) {
             nextCell = gBoard[currPos.i + 1][currPos.j]
-            if (nextCell.gameElement === WALL) meetWall()
+
+            if (nextCell.gameElement === WALL) meetWall({ i: currPos.i + 1, j: currPos.j })
         }
         if (cell.gameElement === HERO) meetHero()
 
@@ -282,7 +317,7 @@ function shoting() {
         currPos = { i: shotPos.i - counter, j: shotPos.j }
         cell = gBoard[currPos.i][currPos.j]
 
-        if (cell.gameElement === WALL) meetWall()
+        if (cell.gameElement === WALL) meetWall(currPos)
         else if (cell.gameElement === HELICOPTER) meetHelicopter(currPos)
         else {
             if (cell.gameElement === CANDY) meetCandy()
@@ -312,25 +347,39 @@ function meetHero() {
         changeHtml('life', gLifeElement)
     }
 
-    if (gPlayer.life === 2) changeOpacity('land', '0.5')
-    else if (gPlayer.life === 1) changeOpacity('land', '0.1')
+    if (gPlayer.life === 2) NORMAL = 'sick'
+    else if (gPlayer.life === 1) NORMAL = 'dying'
 
-    deleteElement(gPlayer.pos, LAND)
+    deleteElement(gPlayer.pos, NORMAL)
     gPlayer.pos = {
         i: gBoard.length - 1,
         j: gBoard.length - 2
     }
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
+    addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
     if (gPlayer.life === 0) gameOver()
 }
 
-function meetWall() {
+function meetWall(cell) {
+    var currBlock
+    for (var i = 0; i < gWall.length; i++) {
+        if (gWall[i].cell.i === cell.i && gWall[i].cell.j === cell.j) currBlock = gWall[i]
+    }
+    currBlock.shoutingCount++
+
+    if (currBlock.shoutingCount === 1) {
+        deleteElement(cell, WALL)
+        addElement(cell, WALL_ELEMENT, WALL, WALL2)
+    } else if (currBlock.shoutingCount === 2) {
+        deleteElement(cell, WALL2)
+        addElement(cell, WALL_ELEMENT, WALL, WALL3)
+    } else if (currBlock.shoutingCount === 3) deleteElement(cell, WALL3)
+
     if (gPlayer.isShoting) {
         gPlayer.isShoting = false
 
     }
-    clearInterval(gHlcptrShotInterval)
-
+    if (gPlayer.isShoting) clearInterval(gShotInterval)
+    else clearInterval(gHlcptrShotInterval)
 }
 
 function meetCandy() {
@@ -342,10 +391,9 @@ function meetCandy() {
 
 function moveHero(i, j) {
     if (j < 0 || j > gBoard[0].length - 1) return
-    deleteElement(gPlayer.pos, LAND)
-    addClassToCell(gPlayer.pos, LAND)
+    deleteElement(gPlayer.pos, NORMAL)
     gPlayer.pos = { i, j }
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
+    addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
 }
 
 function addHlptrs(helicopters) {
@@ -387,7 +435,7 @@ function randerBoard(board) {
     var typeClass
     for (var i = 0; i < board.length; i++) {
         strHtml += `<tr>`
-        if (i === board.length - 1) typeClass = LAND
+        if (i === board.length - 1) typeClass = NORMAL
         for (var j = 0; j < board[i].length; j++) {
             strHtml += `<td class=" ${typeClass} cell-${i}-${j}"></td>`
         }
