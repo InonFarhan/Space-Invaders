@@ -1,9 +1,9 @@
 'use strict'
 
-const BOARD_SIZE = 11
 const HERO_ELEMENT = `&#127918`
+const BOARD_SIZE = 11
 const HELICOPTER_ELEMENT = `&#128641`
-const SHOT_ELEMENT = `|`
+var SHOT_ELEMENT = `|`
 
 const SHOT = 'shot'
 const HELICOPTER = `helicopter`
@@ -13,7 +13,7 @@ const LAND = 'land'
 
 const HELICOPTER_ROW_LENGTH = 3
 const HELICOPTER_COL_COUNT = BOARD_SIZE - 1
-const LASER_SPEED = 80
+var LASER_SPEED = 80
 
 var isPlay
 var isBigBomb
@@ -22,6 +22,10 @@ var isGoLeftOk
 var gIsHhlcptrsFreeze
 var isSilent = false
 
+var gFastBomb
+var gBigBomb
+var gBigBomb_element
+var gFastBomb_element
 var gShotInterval
 var gMovingHlcptrsInterval
 var gMoveCounter
@@ -44,6 +48,10 @@ function initGame() {
     isVictory = false
     isGoLeftOk = true
     isBigBomb = false
+    gBigBomb_element = '&#128640 &#128640 &#128640'
+    gFastBomb_element = '&#128163 &#128163 &#128163'
+    gBigBomb = 3
+    gFastBomb = 3
     gIsHhlcptrsFreeze = false
     gMoveCounter = 1
     gBoard = createBoard(BOARD_SIZE)
@@ -59,6 +67,8 @@ function initGame() {
 function play() {
     if (isPlay) return
     changeOpacity('play', '0')
+    changeHtml('bomb', gBigBomb_element)
+    changeHtml('fast', gFastBomb_element)
     isPlay = true
     addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
     gMovingHlcptrsInterval = setInterval(movingHlcptrs, gGame.speedGame)
@@ -154,16 +164,6 @@ function movingHlcptrs() {
 }
 
 function BlowUpNeighbors(cell) {
-    // HERO_ELEMENT = 
-    // deleteElement(gPlayer.pos, LAND)
-    // addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
-
-    // setTimeout(() => {
-    //     deleteElement(gPlayer.pos, LAND)
-    //     HERO_ELEMENT = `&#127918`
-    //     addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
-    // }, 1000)
-
     for (var i = cell.i - 1; i <= cell.i + 1; i++) {
         for (var j = cell.j - 1; j <= cell.j + 1; j++) {
             if (i < 0 || j < 0 || i > gBoard.length - 1 || j > gBoard.length - 1) return
@@ -201,7 +201,6 @@ function shoting() {
     var currPos
     var counter = 1
     var shotPos = { i: gPlayer.pos.i, j: gPlayer.pos.j }
-
     gShotInterval = setInterval(() => {
         currPos = { i: shotPos.i - counter, j: shotPos.j }
         if (gBoard[currPos.i][currPos.j].gameElement === HELICOPTER) {
@@ -309,10 +308,38 @@ function handleKey(event) {
             frees();
             break;
         case 'n':
-            isBigBomb = true
-            shoting()
+            if (gPlayer.isShoting) return
+            if (gBigBomb > 0) {
+                gBigBomb_element = mySplit(gBigBomb_element, ' ')
+                gBigBomb--
+                isBigBomb = true
+                SHOT_ELEMENT = '&#128640'
+                shoting()
+                setTimeout(() => {
+                    if (gPlayer.isShoting) return
+                    SHOT_ELEMENT = '|'
+                }, 1000)
+                if (gBigBomb === 0) gBigBomb_element = ''
+                changeHtml('bomb', gBigBomb_element)
+            }
             break;
-
+        case 'x':
+            if (gPlayer.isShoting) return
+            if (gFastBomb > 0) {
+                gFastBomb_element = mySplit(gFastBomb_element, ' ')
+                LASER_SPEED *= 3
+                gFastBomb--
+                SHOT_ELEMENT = '^'
+                shoting()
+                setTimeout(() => {
+                    if (gPlayer.isShoting) return
+                    LASER_SPEED /= 3
+                    SHOT_ELEMENT = '|'
+                }, 1000)
+                if (gFastBomb === 0) gFastBomb_element = ''
+                changeHtml('fast', gFastBomb_element)
+            }
+            break;
         default: console.log(event)
     }
 
@@ -442,4 +469,14 @@ function chooseBoardColors(value) {
         changeBackground('.colors', 'rgba(193, 37, 37, 1)')
         changeColor('.colors', 'black')
     }
+}
+
+function mySplit(str, sep) {
+    for (var i = 0; i < str.length; i++) {
+        if (str[i] === sep) {
+            str = str.slice(i + 1, str.length)
+        }
+    }
+    if (!str.includes(sep)) return str
+    return str
 }
