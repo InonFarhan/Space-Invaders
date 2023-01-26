@@ -369,10 +369,10 @@ function meetWall(cell) {
     if (currBlock.shoutingCount === 1) {
         deleteElement(cell, WALL)
         addElement(cell, WALL_ELEMENT, WALL, WALL2)
-    } else if (currBlock.shoutingCount === 2) {
+    } else if (currBlock.shoutingCount === 3) {
         deleteElement(cell, WALL2)
         addElement(cell, WALL_ELEMENT, WALL, WALL3)
-    } else if (currBlock.shoutingCount === 3) deleteElement(cell, WALL3)
+    } else if (currBlock.shoutingCount === 5) deleteElement(cell, WALL3)
 
     if (gPlayer.isShoting) {
         gPlayer.isShoting = false
