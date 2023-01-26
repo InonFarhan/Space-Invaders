@@ -278,6 +278,18 @@ function changeText(cell, value) {
     document.querySelector(`.${cell}`).innerText = value
 }
 
+function changeBackgroundColor(location, color) {
+    document.querySelector(location).style.backgroundColor = color
+}
+
+function changeBackground(location, value) {
+    document.querySelector(location).style.background = value
+}
+
+function changeColor(location, color) {
+    document.querySelector(location).style.color = color
+}
+
 function changeOpacity(cell, value) {
     document.querySelector(`.${cell}`).style.opacity = value
 }
@@ -303,5 +315,69 @@ function silent() {
     else {
         isSilent = false
         changeHtml('silent', '&#128266')
+    }
+}
+
+function chooseBoardColors(value) {
+    if (value === '1') {
+        changeBackground('body', 'rgb(50, 72, 144)')
+        changeBackground('body', 'linear-gradient(90deg, rgba(50, 72, 144, 1) 7%, rgba(123, 182, 198, 1) 98%)')
+
+        changeBackground('h1', 'rgb(101, 96, 172)')
+        changeBackground('h1', 'linear-gradient(90deg, rgba(177, 171, 247, 1) 7%, rgba(158, 225, 230, 1) 82%)')
+        changeColor('h1', 'black')
+
+        changeBackground('.bless', '#003cff')
+        changeColor('.bless', 'white')
+
+        changeBackground('button', 'rgb(101, 96, 172)')
+        changeBackground('button', 'linear-gradient(90deg, rgba(177, 171, 247, 1) 7%, rgba(158, 225, 230, 1) 82%)')
+        changeColor('button', 'white')
+
+        changeBackground('.restart', 'rgb(101, 96, 172)')
+        changeBackground('.restart', 'linear-gradient(90deg, rgba(177, 171, 247, 1) 7%, rgba(158, 225, 230, 1) 82%)')
+        changeColor('.restart', 'white')
+
+        changeBackground('.silent', 'none')
+        changeBackground('.silent', 'rgbrgb(17, 0, 100)')
+        changeColor('.silent', 'white')
+
+        changeBackground('.point', 'rgb(17, 0, 100)')
+        changeColor('.point', 'white')
+
+        changeBackground('.colors', 'rgb(17, 0, 100)')
+        changeColor('.colors', 'white')
+    }
+    if (value === '2') {
+        changeBackground('body', 'rgb(0, 0, 0)')
+        changeBackground('body', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
+
+        changeBackground('h1', 'rgb(0, 0, 0)')
+        changeBackground('h1', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
+        changeColor('h1', 'white')
+
+        changeBackground('.bless', 'rgb(0, 0, 0)')
+        changeBackground('.bless', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
+        changeColor('.bless', 'white')
+
+        changeBackground('button', 'rgb(0, 0, 0)')
+        changeBackground('button', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
+        changeColor('button', 'white')
+
+        changeBackground('.restart', 'rgb(0, 0, 0)')
+        changeBackground('.restart', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
+        changeColor('.restart', 'white')
+
+        changeBackground('.silent', 'rgb(0, 0, 0)')
+        changeBackground('.silent', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
+        changeColor('.silent', 'white')
+
+        changeBackground('.point', 'rgb(0, 0, 0)')
+        changeBackground('.point', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
+        changeColor('.point', 'white')
+
+        changeBackground('.colors', 'rgb(0, 0, 0)')
+        changeBackground('.colors', 'rgba(193, 37, 37, 1)')
+        changeColor('.colors', 'black')
     }
 }
