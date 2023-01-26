@@ -3,13 +3,20 @@
 const HERO_ELEMENT = `&#127918`
 const BOARD_SIZE = 11
 const HELICOPTER_ELEMENT = `&#128641`
-var SHOT_ELEMENT = `|`
+const CANDY_ELEMENT = `&#128176`
+const WALL_ELEMENT = ''
+var SHOT_GAMER_ELEMENT = `|`
+var SHOT_HLCPTRS_ELEMENT = `|`
 
+const DYING = 'dying'
+const WEAK = 'weak'
+const WALL = 'wall'
+const CANDY = 'candy'
 const SHOT = 'shot'
 const HELICOPTER = `helicopter`
 const HERO = 'hero'
 const SKY = 'sky'
-const LAND = 'land'
+const NORMAL = 'normal'
 
 const HELICOPTER_ROW_LENGTH = 3
 const HELICOPTER_COL_COUNT = BOARD_SIZE - 1
@@ -19,18 +26,24 @@ var isPlay
 var isBigBomb
 var isVictory
 var isGoLeftOk
-var gIsHhlcptrsFreeze
 var isSilent = false
 
 var gFastBomb
 var gBigBomb
 var gBigBomb_element
 var gFastBomb_element
-var gShotInterval
-var gMovingHlcptrsInterval
+var gIsHhlcptrsFreeze
+var gGamerTypePos
 var gMoveCounter
 var gHelicopters
 var gBoard
+
+var gCurrFirstHkcptrsRow
+var gCandyInterval
+var gShotInterval
+var gHlcptrShotInterval
+var gHlcptrsShotingInterval
+var gMovingHlcptrsInterval
 
 var gGame = {
     isOn: false,
@@ -41,6 +54,7 @@ var gPlayer = {
     pos: null,
     laserSpeed: LASER_SPEED,
     isShoting: false,
+    life: 3,
     points: 0
 }
 
@@ -48,20 +62,23 @@ function initGame() {
     isVictory = false
     isGoLeftOk = true
     isBigBomb = false
+    gIsHhlcptrsFreeze = false
+    gGamerTypePos = NORMAL
     gBigBomb_element = '&#128640 &#128640 &#128640'
     gFastBomb_element = '&#128163 &#128163 &#128163'
     gBigBomb = 3
     gFastBomb = 3
-    gIsHhlcptrsFreeze = false
     gMoveCounter = 1
+    gCurrFirstHkcptrsRow = HELICOPTER_ROW_LENGTH - 1
     gBoard = createBoard(BOARD_SIZE)
     gHelicopters = createHelicopters()
     gPlayer.pos = {
-        i: gBoard.length - 2,
+        i: gBoard.length - 1,
         j: (BOARD_SIZE - 1) / 2
     }
     randerBoard(gBoard)
     addHlptrs(gHelicopters)
+    buildWall()
 }
 
 function play() {
@@ -70,8 +87,10 @@ function play() {
     changeHtml('bomb', gBigBomb_element)
     changeHtml('fast', gFastBomb_element)
     isPlay = true
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
+    addElement(gPlayer.pos, HERO_ELEMENT, HERO, gGamerTypePos)
+    gHlcptrsShotingInterval = setInterval(hlcptrsShoting, 700)
     gMovingHlcptrsInterval = setInterval(movingHlcptrs, gGame.speedGame)
+    gCandyInterval = setInterval(addCandy, 10000)
 }
 
 function restart() {
@@ -103,16 +122,67 @@ function gameOver() {
 }
 
 function clearIntervals() {
+    clearInterval(gHlcptrsShotingInterval)
     clearInterval(gMovingHlcptrsInterval)
+    clearInterval(gHlcptrShotInterval)
+    clearInterval(gCandyInterval)
 }
 
-function cellCliked(cell) {
-    console.log(cell)
+function buildWall() {
+    addElement({ i: BOARD_SIZE - 2, j: 1 }, WALL_ELEMENT, WALL, WALL)
+    addElement({ i: BOARD_SIZE - 2, j: 2 }, WALL_ELEMENT, WALL, WALL)
+    addElement({ i: BOARD_SIZE - 2, j: 3 }, WALL_ELEMENT, WALL, WALL)
+    addElement({ i: BOARD_SIZE - 2, j: 7 }, WALL_ELEMENT, WALL, WALL)
+    addElement({ i: BOARD_SIZE - 2, j: 8 }, WALL_ELEMENT, WALL, WALL)
+    addElement({ i: BOARD_SIZE - 2, j: 9 }, WALL_ELEMENT, WALL, WALL)
 }
 
-function frees() {
-    if (gIsHhlcptrsFreeze) gIsHhlcptrsFreeze = false
-    else gIsHhlcptrsFreeze = true
+function addCandy() {
+    var currCell = findEnptyCell()
+    addElement(currCell, CANDY_ELEMENT, CANDY, SKY)
+    setTimeout(deleteElement, 5000, currCell, SKY)
+}
+
+function hlcptrsShoting() {
+    var cell
+    var shotPos
+    var currPos
+    var currHlcptrPos
+    var currShotHlcptr
+    var nextCell
+    var counter = 0
+    var avlbHlcptrs = []
+
+    for (var i = gHelicopters.length - 1; i >= 0; i--) {
+        if (gHelicopters[i].cell.i === gCurrFirstHkcptrsRow) {
+            avlbHlcptrs.push(gHelicopters[i])
+        }
+    }
+    if (!avlbHlcptrs.length) return
+    currShotHlcptr = avlbHlcptrs[getRandomInt(0, avlbHlcptrs.length - 1)]
+    currHlcptrPos = {
+        i: currShotHlcptr.cell.i,
+        j: currShotHlcptr.cell.j
+    }
+
+    shotPos = { i: currHlcptrPos.i + 1, j: currHlcptrPos.j }
+
+    gHlcptrShotInterval = setInterval(() => {
+        currPos = { i: shotPos.i + counter, j: shotPos.j }
+        cell = gBoard[currPos.i][currPos.j]
+        if (currPos.i < gBoard.length - 1) {
+            nextCell = gBoard[currPos.i + 1][currPos.j]
+            if (nextCell.gameElement === WALL) meetWall()
+        }
+        if (cell.gameElement === HERO) meetHero()
+
+        addElement(currPos, SHOT_HLCPTRS_ELEMENT, SHOT, SHOT)
+        counter++
+        setTimeout(deleteElement, 70, currPos, SHOT)
+        if (currPos.i === gBoard.length - 1) {
+            clearInterval(gHlcptrShotInterval)
+        }
+    }, gPlayer.laserSpeed)
 }
 
 function movingHlcptrs() {
@@ -160,6 +230,7 @@ function movingHlcptrs() {
                 }
             }
         }, gGame.speedGame / 2)
+        gCurrFirstHkcptrsRow++
     }
 }
 
@@ -198,31 +269,67 @@ function shoting() {
     if (gPlayer.isShoting) return
     gPlayer.isShoting = true
 
+    var cell
     var currPos
     var counter = 1
     var shotPos = { i: gPlayer.pos.i, j: gPlayer.pos.j }
+
     gShotInterval = setInterval(() => {
         currPos = { i: shotPos.i - counter, j: shotPos.j }
-        if (gBoard[currPos.i][currPos.j].gameElement === HELICOPTER) {
-            if (isBigBomb) BlowUpNeighbors(currPos)
-            else shotHlcptr(currPos)
-        }
-        addElement(currPos, SHOT_ELEMENT, SHOT, SHOT)
-        counter++
-        setTimeout(deleteElement, 70, currPos, SHOT)
-        if (currPos.i === 0) {
-            isBigBomb = false
-            gPlayer.isShoting = false
-            clearInterval(gShotInterval)
+        cell = gBoard[currPos.i][currPos.j]
+
+        if (cell.gameElement === WALL) meetWall()
+        else if (cell.gameElement === HELICOPTER) meetHelicopter(currPos)
+        else {
+            if (cell.gameElement === CANDY) meetCandy()
+            addElement(currPos, SHOT_GAMER_ELEMENT, SHOT, SHOT)
+            counter++
+            setTimeout(deleteElement, 70, currPos, SHOT)
+            if (currPos.i === 0) {
+                isBigBomb = false
+                gPlayer.isShoting = false
+                clearInterval(gShotInterval)
+            }
         }
     }, gPlayer.laserSpeed)
 }
 
+function meetHelicopter(cell) {
+    if (isBigBomb) BlowUpNeighbors(cell)
+    else shotHlcptr(cell)
+}
+
+function meetHero() {
+    gPlayer.life--
+    // clearInterval(gHlcptrShotInterval)
+    // deleteElement(gPlayer.pos, gGamerTypePos)
+    // if (gPlayer.life === 2) gGamerTypePos = WEAK
+    // else if (gPlayer.life === 1) gGamerTypePos = DYING
+    // addElement(gPlayer.pos, HERO_ELEMENT, HERO, gGamerTypePos)
+    if (gPlayer.life === 0) gameOver()
+}
+
+function meetWall() {
+    if (gPlayer.isShoting) {
+        gPlayer.isShoting = false
+
+    }
+    clearInterval(gHlcptrShotInterval)
+
+}
+
+function meetCandy() {
+    gPlayer.points += HELICOPTER_COL_COUNT
+    changeText('points', gPlayer.points)
+    gIsHhlcptrsFreeze = true
+    setTimeout(() => { gIsHhlcptrsFreeze = false }, 5000)
+}
+
 function moveHero(i, j) {
     if (j < 0 || j > gBoard[0].length - 1) return
-    deleteElement(gPlayer.pos, LAND)
+    deleteElement(gPlayer.pos, gGamerTypePos)
     gPlayer.pos = { i, j }
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
+    addElement(gPlayer.pos, HERO_ELEMENT, HERO, gGamerTypePos)
 }
 
 function addHlptrs(helicopters) {
@@ -261,12 +368,10 @@ function randerCell(cell, value) {
 
 function randerBoard(board) {
     var strHtml = ``
-
     for (var i = 0; i < board.length; i++) {
         strHtml += `<tr>`
         for (var j = 0; j < board[i].length; j++) {
-
-            strHtml += `<td onclick="cellCliked(this)" class="cell-${i}-${j}"></td>`
+            strHtml += `<td class=" cell-${i}-${j}"></td>`
         }
         strHtml += `</tr >`
     }
@@ -304,20 +409,16 @@ function handleKey(event) {
         case ' ':
             shoting();
             break;
-        case '`':
-            frees();
-            break;
         case 'n':
             if (gPlayer.isShoting) return
             if (gBigBomb > 0) {
                 gBigBomb_element = mySplit(gBigBomb_element, ' ')
                 gBigBomb--
                 isBigBomb = true
-                SHOT_ELEMENT = '&#128640'
+                SHOT_GAMER_ELEMENT = '&#128640'
                 shoting()
                 setTimeout(() => {
-                    if (gPlayer.isShoting) return
-                    SHOT_ELEMENT = '|'
+                    SHOT_GAMER_ELEMENT = '|'
                 }, 1000)
                 if (gBigBomb === 0) gBigBomb_element = ''
                 changeHtml('bomb', gBigBomb_element)
@@ -329,12 +430,11 @@ function handleKey(event) {
                 gFastBomb_element = mySplit(gFastBomb_element, ' ')
                 LASER_SPEED *= 3
                 gFastBomb--
-                SHOT_ELEMENT = '^'
+                SHOT_GAMER_ELEMENT = '^'
                 shoting()
                 setTimeout(() => {
-                    if (gPlayer.isShoting) return
                     LASER_SPEED /= 3
-                    SHOT_ELEMENT = '|'
+                    SHOT_GAMER_ELEMENT = '|'
                 }, 1000)
                 if (gFastBomb === 0) gFastBomb_element = ''
                 changeHtml('fast', gFastBomb_element)
@@ -346,10 +446,10 @@ function handleKey(event) {
 }
 
 function addElement(cell, value, element, type) {
-    randerCell(cell, value)
+    addClassToCell(cell, type)
     gBoard[cell.i][cell.j].gameElement = element
     gBoard[cell.i][cell.j].type = type
-    addClassToCell(cell, type)
+    randerCell(cell, value)
 }
 
 function deleteElement(cell, type) {
@@ -479,4 +579,20 @@ function mySplit(str, sep) {
     }
     if (!str.includes(sep)) return str
     return str
+}
+
+function findEnptyCell() {
+    var emptyCells = []
+    for (var i = 0; i < 3; i++) {
+        for (var j = 0; j < gBoard[i].length; j++) {
+            if (gBoard[i][j].gameElement === null) emptyCells.push({ i, j })
+        }
+    }
+    return emptyCells[getRandomInt(0, emptyCells.length - 1)]
+}
+
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min)
 }
