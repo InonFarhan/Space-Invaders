@@ -310,8 +310,10 @@ function shoting() {
         currPos = { i: shotPos.i - counter, j: shotPos.j }
         cell = gBoard[currPos.i][currPos.j]
 
-        if (cell.gameElement === WALL) clearInterval(gShotInterval)
-        else if (cell.gameElement === HELICOPTER) meetHelicopter(currPos)
+        if (cell.gameElement === WALL) {
+            gPlayer.isShoting = false
+            return
+        } else if (cell.gameElement === HELICOPTER) meetHelicopter(currPos)
         else {
             if (cell.gameElement === CANDY) meetCandy()
             addElement(currPos, shotGamerElement, SHOT, SHOT)
@@ -366,9 +368,7 @@ function meetWall(cell) {
         deleteElement(cell, WALL2)
         addElement(cell, WALL_ELEMENT, WALL, WALL3)
     } else if (currBlock.shoutingCount === 5) deleteElement(cell, WALL3)
-
-    if (gPlayer.isShoting) clearInterval(gShotInterval)
-    else clearInterval(gHlcptrShotInterval)
+    clearInterval(gHlcptrShotInterval)
 }
 
 function meetCandy() {
