@@ -1,0 +1,122 @@
+* {
+    text-align: center;
+    margin: auto;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+
+body {
+    background: rgb(50, 72, 144);
+    background: linear-gradient(90deg, rgba(50, 72, 144, 1) 7%, rgba(123, 182, 198, 1) 98%);
+}
+
+h1 {
+    background-color: rgb(101, 96, 172);
+    background: linear-gradient(90deg, rgba(177, 171, 247, 1) 7%, rgba(158, 225, 230, 1) 82%);
+    color: black;
+    width: 250px;
+    border-top-left-radius: 25%;
+    border-top-right-radius: 25%;
+    -webkit-box-shadow: 5px 5px 15px -6px #000000;
+    box-shadow: 5px 5px 15px -6px #000000;
+}
+
+.board {
+    border-style: double;
+    border-color: white;
+    -webkit-box-shadow: 5px 5px 15px 5px #000000;
+    box-shadow: 5px 5px 15px 5px #000000;
+}
+
+td {
+    color: white;
+    font-size: large;
+    width: 50px;
+    height: 50px;
+}
+
+.hero {
+    font-size: xx-large;
+}
+
+.shot {
+    color: goldenrod;
+}
+
+.bless {
+    background: #003cff;
+    color: white;
+    position: fixed;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: xx-large;
+    border-style: double;
+    opacity: 0;
+}
+
+button {
+    background-color: rgb(101, 96, 172);
+    background: linear-gradient(90deg, rgba(177, 171, 247, 1) 7%, rgba(158, 225, 230, 1) 82%);
+    -webkit-box-shadow: 5px 5px 15px -6px #000000;
+    box-shadow: 5px 5px 15px -6px #000000;
+    cursor: pointer;
+}
+
+.play {
+    border-radius: 15%;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: xx-large;
+    width: 580px;
+}
+
+.silent {
+    background: none;
+    background: rgb(17, 0, 100);
+    color: white;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.restart {
+    width: 580px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 25%;
+    border-bottom-right-radius: 25%;
+}
+
+.point {
+    background: rgb(17, 0, 100);
+    color: white;
+    -webkit-box-shadow: 5px 5px 15px -6px #000000;
+    box-shadow: 5px 5px 15px -6px #000000;
+    width: 170px;
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    font-size: x-large;
+}
+
+.colors {
+    background: rgb(17, 0, 100);
+    color: white;
+    -webkit-box-shadow: 5px 5px 15px -6px #000000;
+    box-shadow: 5px 5px 15px -6px #000000;
+    position: fixed;
+    font-family: Arial, Helvetica, sans-serif;
+    left: 10px;
+    top: 45px;
+}
+
+.land {
+    font-size: xxx-large;
+}
+
+.sky {
+    font-size: xx-large;
+}
