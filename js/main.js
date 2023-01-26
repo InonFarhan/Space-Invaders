@@ -16,6 +16,7 @@ const HELICOPTER_COL_COUNT = BOARD_SIZE - 1
 const LASER_SPEED = 80
 
 var isPlay
+var isBigBomb
 var isVictory
 var isGoLeftOk
 var gIsHhlcptrsFreeze
@@ -24,6 +25,7 @@ var isSilent = false
 var gShotInterval
 var gMovingHlcptrsInterval
 var gMoveCounter
+var gHelicopters
 var gBoard
 
 var gGame = {
@@ -41,12 +43,17 @@ var gPlayer = {
 function initGame() {
     isVictory = false
     isGoLeftOk = true
+    isBigBomb = false
     gIsHhlcptrsFreeze = false
     gMoveCounter = 1
     gBoard = createBoard(BOARD_SIZE)
-    gPlayer.pos = { i: gBoard.length - 1, j: (BOARD_SIZE - 1) / 2 }
+    gHelicopters = createHelicopters()
+    gPlayer.pos = {
+        i: gBoard.length - 2,
+        j: (BOARD_SIZE - 1) / 2
+    }
     randerBoard(gBoard)
-    addHlptrs()
+    addHlptrs(gHelicopters)
 }
 
 function play() {
@@ -100,64 +107,90 @@ function frees() {
 
 function movingHlcptrs() {
     if (gIsHhlcptrsFreeze) return
-    var currCell
-    if (!isGoLeftOk) {
-        for (var i = gBoard.length - 1; i >= 0; i--) {
-            for (var j = gBoard.length - 1; j >= 0; j--) {
-                if (gBoard[i][j].gameElement === HELICOPTER) {
-                    deleteElement({ i, j }, SKY)
-                    currCell = { i, j: j + 1 }
-                    addElement(currCell, HELICOPTER_ELEMENT, HELICOPTER, SKY)
-                }
-            }
-        }
-        gMoveCounter++
-    }
+    var currHlcptr
 
-    else {
-        for (var i = gBoard.length - 1; i >= 0; i--) {
-            for (var j = 0; j < gBoard.length; j++) {
-                if (gBoard[i][j].gameElement === HELICOPTER) {
-                    deleteElement({ i, j }, SKY)
-                    currCell = { i, j: j - 1 }
-                    addElement(currCell, HELICOPTER_ELEMENT, HELICOPTER, SKY)
-                }
-            }
+    if (!isGoLeftOk) {
+        for (var i = gHelicopters.length - 1; i >= 0; i--) {
+            currHlcptr = gHelicopters[i]
+            deleteElement(currHlcptr.cell, currHlcptr.type)
+            currHlcptr.cell.j++
+            addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
         }
-        gMoveCounter++
+    } else {
+        for (var i = 0; i < gHelicopters.length; i++) {
+            currHlcptr = gHelicopters[i]
+            deleteElement(currHlcptr.cell, currHlcptr.type)
+            currHlcptr.cell.j--
+            addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
+        }
     }
-    if (gMoveCounter === 2) {
+    gMoveCounter++
+    if (gMoveCounter === (2)) {
+        if (isGoLeftOk) isGoLeftOk = false
+        else isGoLeftOk = true
+        gMoveCounter = 0
+
         setTimeout(() => {
             if (!isPlay) return
             for (var i = gBoard.length - 1; i >= 0; i--) {
                 for (var j = 0; j < gBoard.length; j++) {
+
                     if (gBoard[i][j].gameElement === HELICOPTER) {
-                        deleteElement({ i, j }, SKY)
-                        currCell = { i: i + 1, j }
-                        if (gBoard[currCell.i][currCell.j].type === LAND) gameOver()
-                        addElement(currCell, HELICOPTER_ELEMENT, HELICOPTER, SKY)
+                        for (var h = 0; h < gHelicopters.length; h++) {
+                            var hlcptr = gHelicopters[h]
+                            if (hlcptr.cell.i === i && hlcptr.cell.j === j) {
+                                currHlcptr = hlcptr
+                            }
+                        }
+                        deleteElement(currHlcptr.cell, currHlcptr.type)
+                        currHlcptr.cell.i++
+                        addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
+                        if (currHlcptr.cell.i + 1 === gBoard.length - 2) gameOver()
                     }
                 }
             }
         }, gGame.speedGame / 2)
+    }
+}
 
-        if (isGoLeftOk) {
-            isGoLeftOk = false
-            gMoveCounter = 0
-        } else if (!isGoLeftOk) {
-            isGoLeftOk = true
-            gMoveCounter = 0
+function BlowUpNeighbors(cell) {
+    // HERO_ELEMENT = 
+    // deleteElement(gPlayer.pos, LAND)
+    // addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
+
+    // setTimeout(() => {
+    //     deleteElement(gPlayer.pos, LAND)
+    //     HERO_ELEMENT = `&#127918`
+    //     addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
+    // }, 1000)
+
+    for (var i = cell.i - 1; i <= cell.i + 1; i++) {
+        for (var j = cell.j - 1; j <= cell.j + 1; j++) {
+            if (i < 0 || j < 0 || i > gBoard.length - 1 || j > gBoard.length - 1) return
+            if (gBoard[i][j].gameElement === HELICOPTER) {
+                shotHlcptr({ i, j })
+            }
         }
     }
 }
 
 function shotHlcptr(cell) {
-    deleteElement(cell, SKY)
+    var hlcptr
+    var currHlcptr
+    for (var i = 0; i < gHelicopters.length; i++) {
+        hlcptr = gHelicopters[i]
+        if (hlcptr.cell.i === cell.i && hlcptr.cell.j === cell.j) {
+            currHlcptr = hlcptr
+            gHelicopters.splice(i, 1)
+        }
+    }
+    deleteElement(currHlcptr.cell, currHlcptr.type)
     clearInterval(gShotInterval)
     gGame.helicopterCount--
     gPlayer.points++
     changeText('points', gPlayer.points)
     gPlayer.isShoting = false
+    isBigBomb = false
     if (checkIfVictory()) gameOver()
 }
 
@@ -171,11 +204,15 @@ function shoting() {
 
     gShotInterval = setInterval(() => {
         currPos = { i: shotPos.i - counter, j: shotPos.j }
-        if (gBoard[currPos.i][currPos.j].gameElement === HELICOPTER) shotHlcptr(currPos)
+        if (gBoard[currPos.i][currPos.j].gameElement === HELICOPTER) {
+            if (isBigBomb) BlowUpNeighbors(currPos)
+            else shotHlcptr(currPos)
+        }
         addElement(currPos, SHOT_ELEMENT, SHOT, SHOT)
         counter++
         setTimeout(deleteElement, 70, currPos, SHOT)
         if (currPos.i === 0) {
+            isBigBomb = false
             gPlayer.isShoting = false
             clearInterval(gShotInterval)
         }
@@ -189,12 +226,33 @@ function moveHero(i, j) {
     addElement(gPlayer.pos, HERO_ELEMENT, HERO, LAND)
 }
 
-function addHlptrs() {
+function addHlptrs(helicopters) {
+    var currHlcptr
+    for (var i = 0; i < helicopters.length; i++) {
+        currHlcptr = helicopters[i]
+        currHlcptr.isLive = true
+        addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
+    }
+}
+
+function createHelicopters() {
+    var helicopters = []
     for (var i = 0; i < HELICOPTER_ROW_LENGTH; i++) {
         for (var j = 1; j < HELICOPTER_COL_COUNT; j++) {
-            addElement({ i, j }, HELICOPTER_ELEMENT, HELICOPTER, SKY)
+            helicopters.push(createHelicopter({ i, j }, HELICOPTER_ELEMENT, HELICOPTER, SKY))
             gGame.helicopterCount++
         }
+    }
+    return helicopters
+}
+
+function createHelicopter(cell, value, element, type) {
+    var helicpter
+    return helicpter = {
+        cell: cell,
+        value: value,
+        element: element,
+        type: type
     }
 }
 
@@ -249,6 +307,10 @@ function handleKey(event) {
             break;
         case '`':
             frees();
+            break;
+        case 'n':
+            isBigBomb = true
+            shoting()
             break;
 
         default: console.log(event)
