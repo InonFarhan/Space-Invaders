@@ -10,7 +10,6 @@ const LOSE_SOUND = new Audio('sound/lose.wav')
 const WIN_SOUND = new Audio('sound/win.mp3')
 const BOUTTON_SOUND = new Audio('sound/button.mp3')
 
-var bigBombColor = 'red'
 const DYING = 'dying'
 const WEAK = 'weak'
 const WALL = 'wall'
@@ -31,12 +30,14 @@ const WALL_ELEMENT = ''
 const HELICOPTER_ROW_LENGTH = 3
 const HELICOPTER_COL_COUNT = BOARD_SIZE - 1
 
+var bigBombColor = 'red'
 var shotGamerElement = `|`
 var shotHlcptrsElement = `|`
 var LASER_SPEED = 80
 var NORMAL = 'normal'
 
 var isPlay
+var iOpen
 var isOne
 var isBigBomb
 var isVictory
@@ -90,6 +91,7 @@ function initGame() {
     isHlctrsGoDown = false
     gPlayer.isLive = true
     isHlcptrsOnLand = false
+    iOpen = true
     gBigBombElement = '&#128640 &#128640 &#128640'
     gFastBombElement = '&#128163 &#128163 &#128163'
     gLifeElement = '&#128155 &#128155 &#128155'
@@ -144,6 +146,11 @@ function restart() {
     gPlayer.life = 3
     changeOpacity('play', '1')
     changeText('points', gPlayer.points)
+    bigBombColor = 'red'
+    shotGamerElement = `|`
+    shotHlcptrsElement = `|`
+    LASER_SPEED = 80
+    NORMAL = 'normal'
     clearIntervals()
     initGame()
 }
@@ -314,6 +321,8 @@ function movingHlcptrs() {
                         }
                         deleteElement(currHlcptr.cell, currHlcptr.type)
                         currHlcptr.cell.i++
+                        if (currHlcptr.type === 'side') currHlcptr.type = 'sky'
+                        else currHlcptr.type = 'side'
                         addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
                         if (currHlcptr.cell.i + 1 === gBoard.length - 2) {
                             isHlcptrsOnLand = true
@@ -718,6 +727,18 @@ function chooseBoardColors(value) {
         changeBackground('.colors', 'rgba(193, 37, 37, 1)')
         changeColor('.colors', 'black')
         bigBombColor = 'orange'
+    }
+}
+
+function information() {
+    if (iOpen) {
+        changeOpacity('information', '0')
+        changeHtml('i', 'i')
+        iOpen = false
+    } else {
+        changeOpacity('information', '1')
+        changeHtml('i', 'x')
+        iOpen = true
     }
 }
 
