@@ -135,7 +135,9 @@ function gameOver() {
 function clearIntervals() {
     clearInterval(gHlcptrsShotingInterval)
     clearInterval(gMovingHlcptrsInterval)
+    clearInterval(gCurrFirstHkcptrsRow)
     clearInterval(gHlcptrShotInterval)
+    clearInterval(gShotInterval)
     clearInterval(gCandyInterval)
 }
 
@@ -150,7 +152,7 @@ function buildWall(wall) {
 function createWall() {
     var wall = []
     for (var j = 1; j <= 9; j++) {
-        if (j > 3 && j < 7) continue
+        if (j > 2 && j < 8) continue
         wall.push(createBlock({ i: 9, j }, WALL_ELEMENT, WALL, WALL))
     }
     return wall
@@ -207,7 +209,7 @@ function hlcptrsShoting() {
             if (nextCell.gameElement === WALL) meetWall({ i: currPos.i + 1, j: currPos.j })
         }
         if (cell.gameElement === HERO) meetHero()
-
+        else if (cell.gameElement === SHOT) return
         addElement(currPos, shotHlcptrsElement, SHOT, SHOT)
         counter++
         setTimeout(deleteElement, 70, currPos, SHOT)
@@ -311,10 +313,14 @@ function shoting() {
         cell = gBoard[currPos.i][currPos.j]
 
         if (cell.gameElement === WALL) {
+            clearInterval(gShotInterval)
             gPlayer.isShoting = false
             return
         } else if (cell.gameElement === HELICOPTER) meetHelicopter(currPos)
-        else {
+        else if (cell.gameElement === SHOT) {
+            gPlayer.isShoting = false
+            return
+        } else {
             if (cell.gameElement === CANDY) meetCandy()
             addElement(currPos, shotGamerElement, SHOT, SHOT)
             counter++
@@ -355,19 +361,22 @@ function meetHero() {
 }
 
 function meetWall(cell) {
+    var currIdx
     var currBlock
     for (var i = 0; i < gWall.length; i++) {
-        if (gWall[i].cell.i === cell.i && gWall[i].cell.j === cell.j) currBlock = gWall[i]
+        if (gWall[i].cell.i === cell.i && gWall[i].cell.j === cell.j) {
+            currBlock = gWall[i]
+            currIdx = i
+        }
     }
     currBlock.shoutingCount++
-
     if (currBlock.shoutingCount === 1) {
         deleteElement(cell, WALL)
         addElement(cell, WALL_ELEMENT, WALL, WALL2)
     } else if (currBlock.shoutingCount === 3) {
         deleteElement(cell, WALL2)
-        addElement(cell, WALL_ELEMENT, WALL, WALL3)
-    } else if (currBlock.shoutingCount === 5) deleteElement(cell, WALL3)
+        gWall.splice(currIdx, 1)
+    }
     clearInterval(gHlcptrShotInterval)
 }
 
