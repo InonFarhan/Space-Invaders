@@ -1,5 +1,16 @@
 'use strict'
 
+var WALL_BROKEN_SOUND = new Audio('sound/broken2.wav')
+const END_OF_WARR_SOUND = new Audio('sound/end of warr.wav')
+const BIG_BOMB_SOUND_SEND = new Audio('sound/big bomb send.wav')
+const BIG_BOMB_SOUND = new Audio('sound/big bomb.mp3')
+const FAST_BOMB_SOUND = new Audio('sound/fast bomb.wav')
+const SHOTING_SOUND = new Audio('sound/shuting.wav')
+const LOSE_SOUND = new Audio('sound/lose.wav')
+const WIN_SOUND = new Audio('sound/win.mp3')
+const BOUTTON_SOUND = new Audio('sound/button.mp3')
+
+var bigBombColor = 'red'
 const DYING = 'dying'
 const WEAK = 'weak'
 const WALL = 'wall'
@@ -26,10 +37,13 @@ var LASER_SPEED = 80
 var NORMAL = 'normal'
 
 var isPlay
+var isOne
 var isBigBomb
 var isVictory
 var isGoLeftOk
 var isSilent = false
+var isHlctrsGoDown
+var isHlcptrsOnLand
 
 var gWallShotCount
 var gFastBomb
@@ -39,7 +53,6 @@ var gBigBombElement
 var gFastBombElement
 var gIsHhlcptrsFreeze
 var gMoveCounter
-var gHelicopters
 var gBoard
 var gWall
 
@@ -48,26 +61,35 @@ var gCandyInterval
 var gShotInterval
 var gHlcptrShotInterval
 var gHlcptrsShotingInterval
-var gMovingHlcptrsInterval
+var gHlcptrsMovingInterval
 
+var gHelicopters = {
+    helicopters: null,
+    shotIntervalSpeed: null,
+    moveIntervalSpeed: null
+}
 var gGame = {
     isOn: false,
     helicopterCount: 0,
-    speedGame: 2000
 }
 var gPlayer = {
     pos: null,
     laserSpeed: LASER_SPEED,
     isShoting: false,
     life: 3,
-    points: 0
+    points: 0,
+    isLive: null
 }
 
 function initGame() {
     isVictory = false
     isGoLeftOk = true
     isBigBomb = false
+    isOne = true
     gIsHhlcptrsFreeze = false
+    isHlctrsGoDown = false
+    gPlayer.isLive = true
+    isHlcptrsOnLand = false
     gBigBombElement = '&#128640 &#128640 &#128640'
     gFastBombElement = '&#128163 &#128163 &#128163'
     gLifeElement = '&#128155 &#128155 &#128155'
@@ -77,32 +99,46 @@ function initGame() {
     gWallShotCount = 0
     gCurrFirstHkcptrsRow = HELICOPTER_ROW_LENGTH - 1
     gBoard = createBoard(BOARD_SIZE)
-    gHelicopters = createHelicopters()
+    gHelicopters.helicopters = createHelicopters()
+    gHelicopters.shotIntervalSpeed = 700
+    gHelicopters.moveIntervalSpeed = 2000
     gPlayer.pos = {
         i: gBoard.length - 1,
         j: gBoard.length - 2
     }
     randerBoard(gBoard)
-    addHlptrs(gHelicopters)
+    addHlptrs(gHelicopters.helicopters)
     gWall = createWall()
     buildWall(gWall)
-    console.log(gWall)
 }
 
 function play() {
     if (isPlay) return
+    if (!isSilent) BOUTTON_SOUND.play
     changeOpacity('play', '0')
     changeHtml('bomb', gBigBombElement)
     changeHtml('fast', gFastBombElement)
     changeHtml('life', gLifeElement)
     isPlay = true
     addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
-    gHlcptrsShotingInterval = setInterval(hlcptrsShoting, 700)
-    gMovingHlcptrsInterval = setInterval(movingHlcptrs, gGame.speedGame)
+    gHlcptrsShotingInterval = setInterval(hlcptrsShoting, gHelicopters.shotIntervalSpeed)
+    gHlcptrsMovingInterval = setInterval(movingHlcptrs, gHelicopters.moveIntervalSpeed)
     gCandyInterval = setInterval(addCandy, 10000)
+    setInterval(changeBombSound(), 500)
+}
+
+function changeBombSound() {
+    if (isOne) {
+        WALL_BROKEN_SOUND = new Audio('sound/broken2.wav')
+        isOne = false
+    } else {
+        WALL_BROKEN_SOUND = new Audio('sound/broken1.wav')
+        isOne = true
+    }
 }
 
 function restart() {
+    if (!isSilent) BOUTTON_SOUND.play
     isPlay = false
     gPlayer.points = 0
     gPlayer.life = 3
@@ -123,18 +159,36 @@ function checkIfVictory() {
 function gameOver() {
     isPlay = false
     clearIntervals()
+    if (isHlcptrsOnLand) {
+        var currCell
+        var counter = 0
+        if (!isSilent) END_OF_WARR_SOUND.play()
+        var boomInterval = setInterval(() => {
+            for (var i = gBoard.length - 2; i < gBoard.length; i++) {
+                for (var j = 1; j < gBoard[i].length; j++) {
+                    currCell = { i, j }
+                    changeCellColor(currCell, bigBombColor)
+                    setTimeout(changeCellColor, 150, currCell, null)
+                    counter++
+                    if (counter === 50) clearInterval(boomInterval)
+                    deleteElement(currCell, WALL)
+                    deleteElement(currCell, WALL2)
+                }
+            }
+        }, 500)
+    }
     showForSec('bless')
     if (isVictory) {
         changeHtml('bless', 'You won!')
     } else {
         changeHtml('bless', 'You lose...')
     }
-    deleteElement(gPlayer.pos, NORMAL)
+    if (gPlayer.isLive) deleteElement(gPlayer.pos, NORMAL)
 }
 
 function clearIntervals() {
     clearInterval(gHlcptrsShotingInterval)
-    clearInterval(gMovingHlcptrsInterval)
+    clearInterval(gHlcptrsMovingInterval)
     clearInterval(gCurrFirstHkcptrsRow)
     clearInterval(gHlcptrShotInterval)
     clearInterval(gShotInterval)
@@ -153,7 +207,7 @@ function createWall() {
     var wall = []
     for (var j = 1; j <= 9; j++) {
         if (j > 2 && j < 8) continue
-        wall.push(createBlock({ i: 9, j }, WALL_ELEMENT, WALL, WALL))
+        wall.push(createBlock({ i: gBoard.length - 2, j }, WALL_ELEMENT, WALL, WALL))
     }
     return wall
 }
@@ -184,10 +238,10 @@ function hlcptrsShoting() {
     var nextCell
     var counter = 0
     var avlbHlcptrs = []
-
-    for (var i = gHelicopters.length - 1; i >= 0; i--) {
-        if (gHelicopters[i].cell.i === gCurrFirstHkcptrsRow) {
-            avlbHlcptrs.push(gHelicopters[i])
+    if (!isSilent) SHOTING_SOUND.play()
+    for (var i = gHelicopters.helicopters.length - 1; i >= 0; i--) {
+        if (gHelicopters.helicopters[i].cell.i === gCurrFirstHkcptrsRow) {
+            avlbHlcptrs.push(gHelicopters.helicopters[i])
         }
     }
     if (!avlbHlcptrs.length) return
@@ -201,11 +255,11 @@ function hlcptrsShoting() {
 
     gHlcptrShotInterval = setInterval(() => {
         currPos = { i: shotPos.i + counter, j: shotPos.j }
+        if (currPos.i > gBoard.length - 1) return
         cell = gBoard[currPos.i][currPos.j]
 
         if (currPos.i < gBoard.length - 1) {
             nextCell = gBoard[currPos.i + 1][currPos.j]
-
             if (nextCell.gameElement === WALL) meetWall({ i: currPos.i + 1, j: currPos.j })
         }
         if (cell.gameElement === HERO) meetHero()
@@ -222,23 +276,24 @@ function hlcptrsShoting() {
 function movingHlcptrs() {
     if (gIsHhlcptrsFreeze) return
     var currHlcptr
-
-    if (!isGoLeftOk) {
-        for (var i = gHelicopters.length - 1; i >= 0; i--) {
-            currHlcptr = gHelicopters[i]
-            deleteElement(currHlcptr.cell, currHlcptr.type)
-            currHlcptr.cell.j++
-            addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
+    if (!isHlctrsGoDown) {
+        if (!isGoLeftOk) {
+            for (var i = gHelicopters.helicopters.length - 1; i >= 0; i--) {
+                currHlcptr = gHelicopters.helicopters[i]
+                deleteElement(currHlcptr.cell, currHlcptr.type)
+                currHlcptr.cell.j++
+                addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
+            }
+        } else {
+            for (var i = 0; i < gHelicopters.helicopters.length; i++) {
+                currHlcptr = gHelicopters.helicopters[i]
+                deleteElement(currHlcptr.cell, currHlcptr.type)
+                currHlcptr.cell.j--
+                addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
+            }
         }
-    } else {
-        for (var i = 0; i < gHelicopters.length; i++) {
-            currHlcptr = gHelicopters[i]
-            deleteElement(currHlcptr.cell, currHlcptr.type)
-            currHlcptr.cell.j--
-            addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
-        }
-    }
-    gMoveCounter++
+        gMoveCounter++
+    } else gMoveCounter = 2
     if (gMoveCounter === (2)) {
         if (isGoLeftOk) isGoLeftOk = false
         else isGoLeftOk = true
@@ -246,12 +301,13 @@ function movingHlcptrs() {
 
         setTimeout(() => {
             if (!isPlay) return
+            var counter = 0
             for (var i = gBoard.length - 1; i >= 0; i--) {
                 for (var j = 0; j < gBoard.length; j++) {
 
                     if (gBoard[i][j].gameElement === HELICOPTER) {
-                        for (var h = 0; h < gHelicopters.length; h++) {
-                            var hlcptr = gHelicopters[h]
+                        for (var h = 0; h < gHelicopters.helicopters.length; h++) {
+                            var hlcptr = gHelicopters.helicopters[h]
                             if (hlcptr.cell.i === i && hlcptr.cell.j === j) {
                                 currHlcptr = hlcptr
                             }
@@ -259,16 +315,21 @@ function movingHlcptrs() {
                         deleteElement(currHlcptr.cell, currHlcptr.type)
                         currHlcptr.cell.i++
                         addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
-                        if (currHlcptr.cell.i + 1 === gBoard.length - 2) gameOver()
+                        if (currHlcptr.cell.i + 1 === gBoard.length - 2) {
+                            isHlcptrsOnLand = true
+                            counter++
+                            if (counter === HELICOPTER_COL_COUNT - 2) gameOver()
+                        }
                     }
                 }
             }
-        }, gGame.speedGame / 2)
+        }, gHelicopters.moveIntervalSpeed / 2)
         gCurrFirstHkcptrsRow++
     }
 }
 
 function BlowUpNeighbors(cell) {
+    if (!isSilent) BIG_BOMB_SOUND.play()
     for (var i = cell.i - 1; i <= cell.i + 1; i++) {
         for (var j = cell.j - 1; j <= cell.j + 1; j++) {
             if (i < 0 || j < 0 || i > gBoard.length - 1 || j > gBoard.length - 1) return
@@ -277,17 +338,22 @@ function BlowUpNeighbors(cell) {
             }
         }
     }
+    isBigBomb = false
 }
 
 function shotHlcptr(cell) {
     var hlcptr
     var currHlcptr
-    for (var i = 0; i < gHelicopters.length; i++) {
-        hlcptr = gHelicopters[i]
+    for (var i = 0; i < gHelicopters.helicopters.length; i++) {
+        hlcptr = gHelicopters.helicopters[i]
         if (hlcptr.cell.i === cell.i && hlcptr.cell.j === cell.j) {
             currHlcptr = hlcptr
-            gHelicopters.splice(i, 1)
+            gHelicopters.helicopters.splice(i, 1)
         }
+    }
+    if (isBigBomb) {
+        changeCellColor(cell, bigBombColor)
+        setTimeout(changeCellColor, 150, cell, null)
     }
     deleteElement(currHlcptr.cell, currHlcptr.type)
     clearInterval(gShotInterval)
@@ -295,14 +361,13 @@ function shotHlcptr(cell) {
     gPlayer.points++
     changeText('points', gPlayer.points)
     gPlayer.isShoting = false
-    isBigBomb = false
     if (checkIfVictory()) gameOver()
 }
 
 function shoting() {
     if (gPlayer.isShoting) return
     gPlayer.isShoting = true
-
+    if (!isSilent) SHOTING_SOUND.play()
     var cell
     var currPos
     var counter = 1
@@ -357,12 +422,23 @@ function meetHero() {
         j: gBoard.length - 2
     }
     addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
-    if (gPlayer.life === 0) gameOver()
+    if (gPlayer.life === 0) {
+        deleteElement(gPlayer.pos, NORMAL)
+        isHlctrsGoDown = true
+        gPlayer.isLive = false
+        clearInterval(gHlcptrsShotingInterval)
+        clearInterval(gHlcptrsMovingInterval)
+        gHelicopters.shotIntervalSpeed /= 5
+        gHelicopters.moveIntervalSpeed /= 4
+        gHlcptrsMovingInterval = setInterval(movingHlcptrs, gHelicopters.moveIntervalSpeed)
+        gHlcptrsShotingInterval = setInterval(hlcptrsShoting, gHelicopters.shotIntervalSpeed)
+    }
 }
 
 function meetWall(cell) {
     var currIdx
     var currBlock
+    if (!isSilent) WALL_BROKEN_SOUND.play()
     for (var i = 0; i < gWall.length; i++) {
         if (gWall[i].cell.i === cell.i && gWall[i].cell.j === cell.j) {
             currBlock = gWall[i]
@@ -430,7 +506,7 @@ function randerCell(cell, value) {
 
 function randerBoard(board) {
     var strHtml = ``
-    var typeClass
+    var typeClass = ''
     for (var i = 0; i < board.length; i++) {
         strHtml += `<tr>`
         if (i === board.length - 1) typeClass = NORMAL
@@ -458,7 +534,7 @@ function createBoard(size) {
 }
 
 function handleKey(event) {
-    if (!isPlay) return
+    if (!isPlay || !gPlayer.isLive) return
 
     var i = gPlayer.pos.i;
     var j = gPlayer.pos.j;
@@ -476,6 +552,7 @@ function handleKey(event) {
         case 'n':
             if (gPlayer.isShoting) return
             if (gBigBomb > 0) {
+                if (!isSilent) BIG_BOMB_SOUND_SEND.play()
                 gBigBombElement = mySplit(gBigBombElement, ' ')
                 gBigBomb--
                 isBigBomb = true
@@ -491,6 +568,7 @@ function handleKey(event) {
         case 'x':
             if (gPlayer.isShoting) return
             if (gFastBomb > 0) {
+                if (!isSilent) FAST_BOMB_SOUND.play()
                 gFastBombElement = mySplit(gFastBombElement, ' ')
                 LASER_SPEED *= 3
                 gFastBomb--
@@ -543,6 +621,10 @@ function changeColor(location, color) {
     document.querySelector(location).style.color = color
 }
 
+function changeCellColor(cell, color) {
+    document.querySelector(`.cell-${cell.i}-${cell.j}`).style.backgroundColor = color
+}
+
 function changeOpacity(cell, value) {
     document.querySelector(`.${cell}`).style.opacity = value
 }
@@ -562,6 +644,7 @@ function showForSec(cell) {
 
 function silent() {
     if (!isSilent) {
+        BOUTTON_SOUND.play()
         isSilent = true
         changeHtml('silent', '&#128263')
     }
@@ -600,6 +683,8 @@ function chooseBoardColors(value) {
 
         changeBackground('.colors', 'rgb(17, 0, 100)')
         changeColor('.colors', 'white')
+
+        bigBombColor = 'red'
     }
     if (value === '2') {
         changeBackground('body', 'rgb(0, 0, 0)')
@@ -632,6 +717,7 @@ function chooseBoardColors(value) {
         changeBackground('.colors', 'rgb(0, 0, 0)')
         changeBackground('.colors', 'rgba(193, 37, 37, 1)')
         changeColor('.colors', 'black')
+        bigBombColor = 'orange'
     }
 }
 
