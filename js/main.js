@@ -186,11 +186,16 @@ function gameOver() {
             }
         }, 500)
     }
-    showForSec('bless')
     if (isVictory) {
+        WIN_SOUND.play()
         changeHtml('bless', 'You won!')
+        showForSec('bless')
     } else {
         changeHtml('bless', 'You lose...')
+        setTimeout(() => {
+            LOSE_SOUND.play()
+            showForSec('bless')
+        }, 5000);
     }
     if (gPlayer.isLive) deleteElement(gPlayer.pos, NORMAL)
 }
@@ -669,9 +674,6 @@ function chooseBoardColors(value) {
         changeBackground('h1', 'linear-gradient(90deg, rgba(177, 171, 247, 1) 7%, rgba(158, 225, 230, 1) 82%)')
         changeColor('h1', 'black')
 
-        changeBackground('.bless', '#003cff')
-        changeColor('.bless', 'white')
-
         changeBackground('button', 'rgb(101, 96, 172)')
         changeBackground('button', 'linear-gradient(90deg, rgba(177, 171, 247, 1) 7%, rgba(158, 225, 230, 1) 82%)')
         changeColor('button', 'white')
@@ -699,10 +701,6 @@ function chooseBoardColors(value) {
         changeBackground('h1', 'rgb(0, 0, 0)')
         changeBackground('h1', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
         changeColor('h1', 'white')
-
-        changeBackground('.bless', 'rgb(0, 0, 0)')
-        changeBackground('.bless', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
-        changeColor('.bless', 'white')
 
         changeBackground('button', 'rgb(0, 0, 0)')
         changeBackground('button', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')

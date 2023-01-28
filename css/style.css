@@ -44,14 +44,13 @@ td {
 }
 
 .bless {
-    background: #003cff;
     color: white;
     position: fixed;
+    width: 450px;
     top: 25%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: xx-large;
-    border-style: double;
+    font-size: xxx-large;
     opacity: 0;
 }
 
