@@ -38,7 +38,7 @@ var NORMAL = 'normal'
 
 var isPlay
 var iOpen
-var isOne
+var isBombChange
 var isBigBomb
 var isVictory
 var isGoLeftOk
@@ -46,20 +46,21 @@ var isSilent = false
 var isHlctrsGoDown
 var isHlcptrsOnLand
 
-var gWallShotCount
-var gFastBomb
-var gBigBomb
-var gLifeElement
-var gBigBombElement
-var gFastBombElement
+var gCurrFirstHkcptrsRow
 var gIsHhlcptrsFreeze
 var gMoveCounter
+var gBigBombElement
+var gFastBombElement
+var gWallShotCount
+var gLifeElement
+var gFastBomb
+var gBigBomb
 var gBoard
 var gWall
 
-var gCurrFirstHkcptrsRow
 var gCandyInterval
 var gShotInterval
+var gBombSoundInterval
 var gHlcptrShotInterval
 var gHlcptrsShotingInterval
 var gHlcptrsMovingInterval
@@ -86,7 +87,7 @@ function initGame() {
     isVictory = false
     isGoLeftOk = true
     isBigBomb = false
-    isOne = true
+    isBombChange = true
     gIsHhlcptrsFreeze = false
     isHlctrsGoDown = false
     gPlayer.isLive = true
@@ -121,36 +122,39 @@ function play() {
     changeHtml('bomb', gBigBombElement)
     changeHtml('fast', gFastBombElement)
     changeHtml('life', gLifeElement)
+    information()
     isPlay = true
     addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
     gHlcptrsShotingInterval = setInterval(hlcptrsShoting, gHelicopters.shotIntervalSpeed)
     gHlcptrsMovingInterval = setInterval(movingHlcptrs, gHelicopters.moveIntervalSpeed)
     gCandyInterval = setInterval(addCandy, 10000)
-    setInterval(changeBombSound(), 500)
+    gBombSoundInterval = setInterval(changeBombSound(), 500)
 }
 
 function changeBombSound() {
-    if (isOne) {
+    if (isBombChange) {
         WALL_BROKEN_SOUND = new Audio('sound/broken2.wav')
-        isOne = false
+        isBombChange = false
     } else {
         WALL_BROKEN_SOUND = new Audio('sound/broken1.wav')
-        isOne = true
+        isBombChange = true
     }
 }
 
 function restart() {
     if (!isSilent) BOUTTON_SOUND.play
     isPlay = false
-    gPlayer.points = 0
-    gPlayer.life = 3
-    changeOpacity('play', '1')
-    changeText('points', gPlayer.points)
+    NORMAL = 'normal'
     bigBombColor = 'red'
     shotGamerElement = `|`
     shotHlcptrsElement = `|`
     LASER_SPEED = 80
-    NORMAL = 'normal'
+    gPlayer.life = 3
+    gPlayer.points = 0
+    gGame.helicopterCount = 0
+    changeText('points', gPlayer.points)
+    changeOpacity('play', '1')
+    information()
     clearIntervals()
     initGame()
 }
@@ -203,10 +207,10 @@ function gameOver() {
 function clearIntervals() {
     clearInterval(gHlcptrsShotingInterval)
     clearInterval(gHlcptrsMovingInterval)
-    clearInterval(gCurrFirstHkcptrsRow)
     clearInterval(gHlcptrShotInterval)
     clearInterval(gShotInterval)
     clearInterval(gCandyInterval)
+    clearInterval(gBombSoundInterval)
 }
 
 function buildWall(wall) {
