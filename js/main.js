@@ -172,14 +172,16 @@ function gameOver() {
         if (!isSilent) END_OF_WARR_SOUND.play()
         var boomInterval = setInterval(() => {
             for (var i = gBoard.length - 2; i < gBoard.length; i++) {
-                for (var j = 1; j < gBoard[i].length; j++) {
+                for (var j = 0; j < gBoard[i].length; j++) {
                     currCell = { i, j }
+                    if (i === gBoard.length - 2) {
+                        deleteElement(currCell, WALL)
+                        deleteElement(currCell, WALL2)
+                    }
                     changeCellColor(currCell, bigBombColor)
                     setTimeout(changeCellColor, 150, currCell, null)
                     counter++
                     if (counter === 50) clearInterval(boomInterval)
-                    deleteElement(currCell, WALL)
-                    deleteElement(currCell, WALL2)
                 }
             }
         }, 500)
@@ -326,8 +328,7 @@ function movingHlcptrs() {
                         addElement(currHlcptr.cell, currHlcptr.value, currHlcptr.element, currHlcptr.type)
                         if (currHlcptr.cell.i + 1 === gBoard.length - 2) {
                             isHlcptrsOnLand = true
-                            counter++
-                            if (counter === HELICOPTER_COL_COUNT - 2) gameOver()
+                            gameOver()
                         }
                     }
                 }
@@ -391,10 +392,7 @@ function shoting() {
             gPlayer.isShoting = false
             return
         } else if (cell.gameElement === HELICOPTER) meetHelicopter(currPos)
-        else if (cell.gameElement === SHOT) {
-            gPlayer.isShoting = false
-            return
-        } else {
+        else {
             if (cell.gameElement === CANDY) meetCandy()
             addElement(currPos, shotGamerElement, SHOT, SHOT)
             counter++
@@ -415,12 +413,8 @@ function meetHelicopter(cell) {
 
 function meetHero() {
     clearInterval(gHlcptrShotInterval)
-    if (gPlayer.life > 0) {
-        gPlayer.life--
-        gLifeElement = mySplit(gLifeElement, ' ')
-        if (gPlayer.life === 0) gLifeElement = ''
-        changeHtml('life', gLifeElement)
-    }
+    gPlayer.life--
+    gLifeElement = mySplit(gLifeElement, ' ')
 
     if (gPlayer.life === 2) NORMAL = 'sick'
     else if (gPlayer.life === 1) NORMAL = 'dying'
@@ -431,7 +425,9 @@ function meetHero() {
         j: gBoard.length - 2
     }
     addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
+
     if (gPlayer.life === 0) {
+        gLifeElement = ''
         deleteElement(gPlayer.pos, NORMAL)
         isHlctrsGoDown = true
         gPlayer.isLive = false
@@ -442,6 +438,7 @@ function meetHero() {
         gHlcptrsMovingInterval = setInterval(movingHlcptrs, gHelicopters.moveIntervalSpeed)
         gHlcptrsShotingInterval = setInterval(hlcptrsShoting, gHelicopters.shotIntervalSpeed)
     }
+    changeHtml('life', gLifeElement)
 }
 
 function meetWall(cell) {
