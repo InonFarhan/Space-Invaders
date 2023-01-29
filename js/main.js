@@ -9,6 +9,7 @@ const SHOTING_SOUND = new Audio('sound/shuting.wav')
 const LOSE_SOUND = new Audio('sound/lose.wav')
 const WIN_SOUND = new Audio('sound/win.mp3')
 const BOUTTON_SOUND = new Audio('sound/button.mp3')
+const CANDY_SOUND = new Audio('sound/candy.wav')
 
 const DYING = 'dying'
 const WEAK = 'weak'
@@ -46,7 +47,6 @@ var isSilent = false
 var isHlctrsGoDown
 var isHlcptrsOnLand
 
-var gCurrFirstHkcptrsRow
 var gIsHhlcptrsFreeze
 var gMoveCounter
 var gBigBombElement
@@ -101,7 +101,6 @@ function initGame() {
     gFastBomb = 3
     gMoveCounter = 1
     gWallShotCount = 0
-    gCurrFirstHkcptrsRow = HELICOPTER_ROW_LENGTH - 1
     gBoard = createBoard(BOARD_SIZE)
     gHelicopters.helicopters = createHelicopters()
     gHelicopters.shotIntervalSpeed = 700
@@ -116,6 +115,7 @@ function initGame() {
 function play() {
     if (isPlay) return
     if (!isSilent) BOUTTON_SOUND.play
+    isPlay = true
     addHlptrs(gHelicopters.helicopters)
     gWall = createWall()
     buildWall(gWall)
@@ -123,8 +123,7 @@ function play() {
     changeHtml('bomb', gBigBombElement)
     changeHtml('fast', gFastBombElement)
     changeHtml('life', gLifeElement)
-    isPlay = true
-    information()
+    changeOpacity('information', '0')
     addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
     gHlcptrsShotingInterval = setInterval(hlcptrsShoting, gHelicopters.shotIntervalSpeed)
     gHlcptrsMovingInterval = setInterval(movingHlcptrs, gHelicopters.moveIntervalSpeed)
@@ -260,9 +259,8 @@ function hlcptrsShoting() {
     var avlbHlcptrs = []
     if (!isSilent) SHOTING_SOUND.play()
     for (var i = gHelicopters.helicopters.length - 1; i >= 0; i--) {
-        if (gHelicopters.helicopters[i].cell.i === gCurrFirstHkcptrsRow) {
-            avlbHlcptrs.push(gHelicopters.helicopters[i])
-        }
+        nextCell = gBoard[gHelicopters.helicopters[i].cell.i + 1][gHelicopters.helicopters[i].cell.j]
+        if (nextCell.gameElement !== HELICOPTER) avlbHlcptrs.push(gHelicopters.helicopters[i])
     }
     if (!avlbHlcptrs.length) return
     currShotHlcptr = avlbHlcptrs[getRandomInt(0, avlbHlcptrs.length - 1)]
@@ -345,7 +343,6 @@ function movingHlcptrs() {
                 }
             }
         }, gHelicopters.moveIntervalSpeed / 2)
-        gCurrFirstHkcptrsRow++
     }
 }
 
@@ -474,6 +471,7 @@ function meetWall(cell) {
 }
 
 function meetCandy() {
+    if (!isSilent) CANDY_SOUND.play()
     gPlayer.points += HELICOPTER_COL_COUNT
     changeText('points', gPlayer.points)
     gIsHhlcptrsFreeze = true
