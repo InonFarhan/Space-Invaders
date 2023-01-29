@@ -58,6 +58,7 @@ var gBigBomb
 var gBoard
 var gWall
 
+var gBlinkInterval
 var gCandyInterval
 var gShotInterval
 var gBombSoundInterval
@@ -110,20 +111,20 @@ function initGame() {
         j: gBoard.length - 2
     }
     randerBoard(gBoard)
-    addHlptrs(gHelicopters.helicopters)
-    gWall = createWall()
-    buildWall(gWall)
 }
 
 function play() {
     if (isPlay) return
     if (!isSilent) BOUTTON_SOUND.play
+    addHlptrs(gHelicopters.helicopters)
+    gWall = createWall()
+    buildWall(gWall)
     changeOpacity('play', '0')
     changeHtml('bomb', gBigBombElement)
     changeHtml('fast', gFastBombElement)
     changeHtml('life', gLifeElement)
-    information()
     isPlay = true
+    information()
     addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
     gHlcptrsShotingInterval = setInterval(hlcptrsShoting, gHelicopters.shotIntervalSpeed)
     gHlcptrsMovingInterval = setInterval(movingHlcptrs, gHelicopters.moveIntervalSpeed)
@@ -168,7 +169,6 @@ function checkIfVictory() {
 }
 
 function gameOver() {
-    isPlay = false
     clearIntervals()
     if (isHlcptrsOnLand) {
         var currCell
@@ -197,9 +197,11 @@ function gameOver() {
     } else {
         changeHtml('bless', 'You lose...')
         setTimeout(() => {
+            if (!isPlay) return
             LOSE_SOUND.play()
             showForSec('bless')
-        }, 5000);
+            isPlay = false
+        }, 4000)
     }
     if (gPlayer.isLive) deleteElement(gPlayer.pos, NORMAL)
 }
