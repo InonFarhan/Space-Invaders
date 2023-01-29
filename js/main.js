@@ -22,11 +22,13 @@ const HELICOPTER = `helicopter`
 const HERO = 'hero'
 const SKY = 'sky'
 
-const HERO_ELEMENT = `&#127918`
-const BOARD_SIZE = 11
-const HELICOPTER_ELEMENT = `&#128641`
+const HERO_ELEMENTS = [`&#127918`, `&#128053`, `&#128405`, `&#128526`, `&#129311`, `&#129409`, `&#129419`, `&#129492`, `&#129491`, `&#129497`, '&#128018']
+const HELICOPTER_ELEMENTS = [`&#128641`, `&#9889`, `&#9992`, `&#11088`, `&#128009`, `&#128018`, `&#128029`, `&#128121`, `&#128122`, `&#128123`, `&#128125`, `&#128126`, `&#128127`, `&#128128`]
+var heroElement = HERO_ELEMENTS[0]
+var helicopterElement = HELICOPTER_ELEMENTS[0]
 const CANDY_ELEMENT = `&#128176`
 const WALL_ELEMENT = ''
+const BOARD_SIZE = 11
 
 const HELICOPTER_ROW_LENGTH = 3
 const HELICOPTER_COL_COUNT = BOARD_SIZE - 1
@@ -102,9 +104,7 @@ function initGame() {
     gMoveCounter = 1
     gWallShotCount = 0
     gBoard = createBoard(BOARD_SIZE)
-    gHelicopters.helicopters = createHelicopters()
-    gHelicopters.shotIntervalSpeed = 700
-    gHelicopters.moveIntervalSpeed = 2000
+
     gPlayer.pos = {
         i: gBoard.length - 1,
         j: gBoard.length - 2
@@ -116,15 +116,19 @@ function play() {
     if (isPlay) return
     if (!isSilent) BOUTTON_SOUND.play
     isPlay = true
+    gHelicopters.helicopters = createHelicopters()
+    gHelicopters.shotIntervalSpeed = 700
+    gHelicopters.moveIntervalSpeed = 2000
     addHlptrs(gHelicopters.helicopters)
     gWall = createWall()
     buildWall(gWall)
-    changeOpacity('play', '0')
     changeHtml('bomb', gBigBombElement)
     changeHtml('fast', gFastBombElement)
     changeHtml('life', gLifeElement)
-    changeOpacity('information', '0')
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
+    changeHtml('i', 'i')
+    changeDisplay('.play', 'none')
+    changeDisplay('.information', 'none')
+    addElement(gPlayer.pos, heroElement, HERO, NORMAL)
     gHlcptrsShotingInterval = setInterval(hlcptrsShoting, gHelicopters.shotIntervalSpeed)
     gHlcptrsMovingInterval = setInterval(movingHlcptrs, gHelicopters.moveIntervalSpeed)
     gCandyInterval = setInterval(addCandy, 10000)
@@ -153,8 +157,10 @@ function restart() {
     gPlayer.points = 0
     gGame.helicopterCount = 0
     changeText('points', gPlayer.points)
-    changeOpacity('play', '1')
-    information()
+    changeDisplay('.setting', 'block')
+    changeDisplay('.setting', 'flex')
+    changeDisplay('.setting', 'flex')
+    document.querySelector('.setting').style.flexDirection = 'row'
     clearIntervals()
     initGame()
 }
@@ -190,14 +196,14 @@ function gameOver() {
         }, 500)
     }
     if (isVictory) {
-        WIN_SOUND.play()
+        if (!isSilent) WIN_SOUND.play()
         changeHtml('bless', 'You won!')
         showForSec('bless')
     } else {
         changeHtml('bless', 'You lose...')
         setTimeout(() => {
             if (!isPlay) return
-            LOSE_SOUND.play()
+            if (!isSilent) LOSE_SOUND.play()
             showForSec('bless')
             isPlay = false
         }, 4000)
@@ -281,7 +287,6 @@ function hlcptrsShoting() {
             if (nextCell.gameElement === WALL) meetWall({ i: currPos.i + 1, j: currPos.j })
         }
         if (cell.gameElement === HERO) meetHero()
-        else if (cell.gameElement === SHOT) return
         addElement(currPos, shotHlcptrsElement, SHOT, SHOT)
         counter++
         setTimeout(deleteElement, 70, currPos, SHOT)
@@ -432,7 +437,7 @@ function meetHero() {
         i: gBoard.length - 1,
         j: gBoard.length - 2
     }
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
+    addElement(gPlayer.pos, heroElement, HERO, NORMAL)
 
     if (gPlayer.life === 0) {
         gLifeElement = ''
@@ -482,7 +487,7 @@ function moveHero(i, j) {
     if (j < 0 || j > gBoard[0].length - 1) return
     deleteElement(gPlayer.pos, NORMAL)
     gPlayer.pos = { i, j }
-    addElement(gPlayer.pos, HERO_ELEMENT, HERO, NORMAL)
+    addElement(gPlayer.pos, heroElement, HERO, NORMAL)
 }
 
 function addHlptrs(helicopters) {
@@ -498,7 +503,7 @@ function createHelicopters() {
     var helicopters = []
     for (var i = 0; i < HELICOPTER_ROW_LENGTH; i++) {
         for (var j = 1; j < HELICOPTER_COL_COUNT; j++) {
-            helicopters.push(createHelicopter({ i, j }, HELICOPTER_ELEMENT, HELICOPTER, SKY))
+            helicopters.push(createHelicopter({ i, j }, helicopterElement, HELICOPTER, SKY))
             gGame.helicopterCount++
         }
     }
@@ -644,6 +649,10 @@ function changeOpacity(cell, value) {
     document.querySelector(`.${cell}`).style.opacity = value
 }
 
+function changeDisplay(location, value) {
+    document.querySelector(location).style.display = value
+}
+
 function addClassToCell(cell, value) {
     document.querySelector(`.cell-${cell.i}-${cell.j}`).classList.add(value)
 }
@@ -693,9 +702,6 @@ function chooseBoardColors(value) {
         changeBackground('.point', 'rgb(17, 0, 100)')
         changeColor('.point', 'white')
 
-        changeBackground('.colors', 'rgb(17, 0, 100)')
-        changeColor('.colors', 'white')
-
         bigBombColor = 'red'
     }
     if (value === '2') {
@@ -722,20 +728,36 @@ function chooseBoardColors(value) {
         changeBackground('.point', 'linear-gradient(90deg, rgba(0, 0, 0, 1) 7%, rgba(193, 37, 37, 1) 98%)')
         changeColor('.point', 'white')
 
-        changeBackground('.colors', 'rgb(0, 0, 0)')
-        changeBackground('.colors', 'rgba(193, 37, 37, 1)')
-        changeColor('.colors', 'black')
         bigBombColor = 'orange'
     }
 }
 
+function chooseHeroEmoji(value) {
+    heroElement = HERO_ELEMENTS[value - 1]
+    if (isPlay) {
+        deleteElement(gPlayer.pos, NORMAL)
+        addElement(gPlayer.pos, heroElement, HERO, NORMAL)
+    }
+}
+
+function chooseAttackersEmoji(value) {
+    helicopterElement = HELICOPTER_ELEMENTS[value - 1]
+}
+
+function closeSetting() {
+    changeDisplay('.setting', 'none')
+    changeDisplay('.play', 'block')
+    changeDisplay('.information', 'block')
+    changeHtml('i', 'x')
+}
+
 function information() {
     if (iOpen) {
-        changeOpacity('information', '0')
+        changeDisplay('.information', 'none')
         changeHtml('i', 'i')
         iOpen = false
     } else {
-        changeOpacity('information', '1')
+        changeDisplay('.information', 'block')
         changeHtml('i', 'x')
         iOpen = true
     }

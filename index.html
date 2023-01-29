@@ -14,11 +14,61 @@
     <p class="point">Player points: <span class="points">0</span></p>
 </body>
 <button onclick="silent()" class="silent">&#128266</button>
-<select class="colors" onclick="chooseBoardColors(value)">
-    <option class="level" value="1">Board colors: Blue</option>
-    <option class="level" value="2">Board colors: Red</option>
-</select>
-<button class="i" onclick="information()">x</button>
+
+<div class="setting">
+
+    <button onclick="closeSetting()">x</button>
+
+    <div class="colors">
+        <p>Board colors:
+            <select onclick="chooseBoardColors(value)">
+                <option value="1">Blue</option>
+                <option value="2"> Red</option>
+            </select>
+    </div>
+    </p>
+
+    <div class="player">
+        <p>Hero
+            <select onclick="chooseHeroEmoji(value)">
+                <option value="1">&#127918</option>
+                <option value="2">&#128053</option>
+                <option value="3">&#128405</option>
+                <option value="4">&#128526</option>
+                <option value="5">&#129311</option>
+                <option value="6">&#129409</option>
+                <option value="7">&#129419</option>
+                <option value="8">&#129492</option>
+                <option value="9">&#129491</option>
+                <option value="10">&#129497</option>
+                <option value="11">'&#128018'</option>
+            </select>
+    </div>
+    </p>
+
+    <div class="attackers">
+        <p>Attackers's emoji:
+            <select onclick="chooseAttackersEmoji(value)">
+                <option value="1">&#128641</option>
+                <option value="2">&#9889</option>
+                <option value="3">&#9992</option>
+                <option value="4">&#11088</option>
+                <option value="5">&#128009</option>
+                <option value="6">&#128018</option>
+                <option value="7">&#128029</option>
+                <option value="8">&#128121</option>
+                <option value="9">&#128122</option>
+                <option value="10">&#128123</option>
+                <option value="11">&#128125</option>
+                <option value="12">&#128126</option>
+                <option value="13">&#128127</option>
+                <option value="14">&#128128</option>
+            </select>
+    </div>
+    </p>
+</div>
+
+<button class="i" onclick="information()">i</button>
 <div class="information">
     <p>In this game you will try to Save the world from</p>
     <p>an attack that will comes from the sky.</p>

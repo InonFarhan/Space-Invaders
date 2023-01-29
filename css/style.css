@@ -70,6 +70,7 @@ button {
     transform: translate(-50%, -50%);
     font-size: xx-large;
     width: 580px;
+    display: none;
 }
 
 .silent {
@@ -101,15 +102,28 @@ button {
     font-size: x-large;
 }
 
-.colors {
-    background: rgb(17, 0, 100);
+.setting {
+    display: flex;
+    flex-direction: row;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    background: rgba(0, 0, 0, 0.682);
     color: white;
     -webkit-box-shadow: 5px 5px 15px -6px #000000;
     box-shadow: 5px 5px 15px -6px #000000;
     position: fixed;
     font-family: Arial, Helvetica, sans-serif;
-    left: 10px;
-    top: 45px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 15%;
+    width: 550px;
+    height: 80px;
+}
+
+select {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    background: rgba(0, 0, 0, 0.682);
+    color: white;
 }
 
 .i {
@@ -137,7 +151,7 @@ button {
     bottom: 20px;
     border-radius: 5%;
     width: 550px;
-    opacity: 1;
+    display: none;
 }
 
 .sky {
